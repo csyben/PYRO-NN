@@ -28,11 +28,8 @@ def example_parallel_2d():
     number_of_projections = 100
     angular_range = np.pi
 
-    source_detector_distance = None
-    source_isocenter_distance = None
-
     # create Geometry class
-    geometry = GeometryParallel2D(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_projections, angular_range, circular_trajectory.circular_trajectory_2d)
+    geometry = GeometryParallel2D(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_projections, angular_range)
     geometry.set_ray_vectors(circular_trajectory.circular_trajectory_2d(geometry))
 
     # Get Phantom
