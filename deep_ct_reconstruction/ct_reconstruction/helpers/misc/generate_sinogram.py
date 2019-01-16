@@ -1,9 +1,11 @@
 import lme_custom_ops
+import tensorflow as tf
 
 
 def generate_sinogram(phantom, layer, geometry):
-    result = layer(phantom, geometry)
-    sinogram = result.eval()
+    with tf.Session() as sess:
+        result = layer(phantom, geometry)
+        sinogram = result.eval()
     return sinogram
 
 def generate_sinogram_parallel_2d(phantom, geometry):

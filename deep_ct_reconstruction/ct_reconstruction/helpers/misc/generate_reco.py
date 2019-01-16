@@ -1,9 +1,11 @@
 import lme_custom_ops
+import tensorflow as tf
 
 
 def generate_reco(sinogram, layer, geometry):
-    result = layer(sinogram, geometry)
-    sinogram = result.eval()
+    with tf.Session() as sess:
+        result = layer(sinogram, geometry)
+        sinogram = result.eval()
     return sinogram
 
 def generate_reco_parallel_2d(phantom, geometry):
