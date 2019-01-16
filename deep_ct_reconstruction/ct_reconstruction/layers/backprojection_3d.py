@@ -3,8 +3,23 @@ import lme_custom_ops
 
 
 # cone_backprojection3d
-def cone_backprojection3d(sinogram, geometry):
-    return lme_custom_ops.cone_backprojection3d(sinogram, **geometry.get_cone_backprojection3d_params_dict())
+def cone_backprojection3d(sinogram, geometry, hardware_interp = False):
+    """
+    Wrapper function for making the layer call.
+    Args:
+        volume:             Input volume to project.
+        geometry:           Corresponding GeometryCone3D Object defining parameters.
+        hardware_interp:    Controls if interpolation is done by GPU 
+    Returns:
+            Initialized lme_custom_ops.cone_backprojection3d layer.
+    """
+    return lme_custom_ops.cone_backprojection3d(sinogram, 
+                                                sinogram_shape      = geometry.sinogram_shape,
+                                                volume_shape        = geometry.volume_shape,
+                                                volume_origin       = geometry.tensor_proto_volume_origin,
+                                                volume_spacing      = geometry.tensor_proto_volume_spacing,
+                                                projection_matrices = geometry.tensor_proto_projection_matrices,
+                                                hardware_interp     = hardware_interp)
 
 '''
     Compute the gradient of the backprojector op by invoking the forward projector.
