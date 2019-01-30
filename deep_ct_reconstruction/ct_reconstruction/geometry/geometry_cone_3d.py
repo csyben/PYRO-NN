@@ -11,8 +11,7 @@ class GeometryCone3D(GeometryBase):
                  volume_shape, volume_spacing,
                  detector_shape, detector_spacing,
                  number_of_projections, angular_range,
-                 source_detector_distance, source_isocenter_distance,
-                 trajectory_defining_function = None):
+                 source_detector_distance, source_isocenter_distance):
 
         # init base Geometry class with 3 dimensional members:
         super().__init__(volume_shape, volume_spacing,
