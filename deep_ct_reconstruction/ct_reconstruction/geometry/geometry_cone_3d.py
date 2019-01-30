@@ -27,4 +27,8 @@ class GeometryCone3D(GeometryBase):
             projection_matrices: np.array defining the trajectory projection_matrices.
         """
         self.projection_matrices = np.array(projection_matrices, self.np_dtype)
+
+    @GeometryBase.SetTensorProtoProperty
+    def projection_matrices(self, value):
+        self.__dict__['projection_matrices'] = value
         self.tensor_proto_projection_matrices = super().to_tensor_proto(self.projection_matrices)

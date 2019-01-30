@@ -27,5 +27,8 @@ class GeometryFan2D(GeometryBase):
             central_ray_vectors: np.array defining the trajectory central_ray_vectors.
         """
         self.central_ray_vectors = np.array(central_ray_vectors, self.np_dtype)
-        self.tensor_proto_central_ray_vectors = super().to_tensor_proto(self.central_ray_vectors)
 
+    @GeometryBase.SetTensorProtoProperty
+    def ray_vectors(self, value):
+        self.__dict__['central_ray_vectors'] = value
+        self.tensor_proto_central_ray_vectors = super().to_tensor_proto(self.central_ray_vectors)

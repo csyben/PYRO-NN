@@ -25,4 +25,8 @@ class GeometryParallel2D(GeometryBase):
             ray_vectors: np.array defining the trajectory ray_vectors.
         """
         self.ray_vectors = np.array(ray_vectors, self.np_dtype)
+
+    @GeometryBase.SetTensorProtoProperty
+    def ray_vectors(self, value):
+        self.__dict__['ray_vectors'] = value
         self.tensor_proto_ray_vectors = super().to_tensor_proto(self.ray_vectors)
