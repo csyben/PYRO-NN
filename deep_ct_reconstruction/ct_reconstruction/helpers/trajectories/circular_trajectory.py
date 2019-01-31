@@ -106,10 +106,10 @@ def circular_trajectory_3d(geometry):
         intrinsic_params_mat[i, i] = geometry.source_detector_distance / geometry.detector_spacing[1-i]
 
     # calc and set detector origin
-    intrinsic_params_mat[0:2, 2] = geometry.detector_shape[::-1] * 0.5
+    intrinsic_params_mat[0:2, 2] = (geometry.detector_shape * geometry.detector_spacing)[::-1]
 
-    #diff_intrinsic = geometry.conrad_intrinsic - intrinsic_params_mat
-    #print("diff_intrinsic\n", diff_intrinsic)
+    diff_intrinsic = geometry.conrad_intrinsic - intrinsic_params_mat
+    print("diff_intrinsic\n", diff_intrinsic)
 
     # configure projection
     projection = np.eye(3, 4)
@@ -148,7 +148,7 @@ def circular_trajectory_3d(geometry):
         extrinsic_params_mat = extrinsic_params_mat / extrinsic_params_mat[3, 3]
 
         diff_extrinsic = geometry.conrad_Rt[p] - extrinsic_params_mat
-        print("diff_extrinsic\n", np.sum(diff_extrinsic))
+        #print("diff_extrinsic\n", np.sum(diff_extrinsic))
         #print("My Matrix Rt:", p ," \n", extrinsic_params_mat)
 
         # calculate projection matrix
@@ -170,33 +170,38 @@ from deep_ct_reconstruction.ct_reconstruction.geometry.geometry_cone_3d import G
 if __name__ == '__main__':
     # ------------------ Declare Parameters ------------------
 
-    # Volume Parameters:
-    volume_size = 250
-    volume_shape = [8*volume_size, 2*volume_size, 3*volume_size]
-    volume_spacing = [0.5, 0.5, 0.5]
+    while(True):
+        # Volume Parameters:
+        volume_size = int(np.random.uniform(10, 1000))
+        volume_shape = [1*volume_size, 2*volume_size, 3*volume_size]
+        volume_spacing = [0.5, 0.5, 0.5]
+        volume_spacing = np.random.uniform(0.1, 1, 3)
 
-    # Detector Parameters:
-    detector_shape = [4*volume_size, 5*volume_size]
-    detector_spacing = [0.5, 0.5]
+        # Detector Parameters:
+        detector_shape = [4*volume_size, 5*volume_size]
+        detector_spacing = [0.5, 0.5]
+        #detector_spacing = np.random.uniform(0.1, 1, 2)
 
-    # Trajectory Parameters:
-    number_of_projections = 360
-    angular_range = 2 * np.pi
+        # Trajectory Parameters:
+        number_of_projections = int(np.random.uniform(10, 1000))
+        angular_range = int(np.random.uniform(1, 5)) * np.pi
 
-    source_detector_distance = 600
-    source_isocenter_distance = 700
+        source_detector_distance = int(np.random.uniform(10, 1000))
+        source_isocenter_distance = int(np.random.uniform(10, 1000))
 
-    # create Geometry class
-    geometry = GeometryCone3D(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_projections, angular_range, source_detector_distance, source_isocenter_distance)
+        # create Geometry class
+        geometry = GeometryCone3D(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_projections, angular_range, source_detector_distance, source_isocenter_distance)
 
-    # test vs pyconrad
-    conrad_projection_matrices, conrad_Rt, conrad_intrinsic = circular_trajectory_3d_pyconrad(geometry)
-    geometry.set_projection_matrices(conrad_projection_matrices)
+        # test vs pyconrad
+        conrad_projection_matrices, conrad_Rt, conrad_intrinsic = circular_trajectory_3d_pyconrad(geometry)
+        geometry.set_projection_matrices(conrad_projection_matrices)
 
-    geometry.conrad_Rt = conrad_Rt
-    geometry.conrad_intrinsic = conrad_intrinsic
+        geometry.conrad_Rt = conrad_Rt
+        geometry.conrad_intrinsic = conrad_intrinsic
 
-    matrices = circular_trajectory_3d(geometry)
+        matrices = circular_trajectory_3d(geometry)
 
-    overall_diff = conrad_projection_matrices-matrices
-    print(np.sum(overall_diff))
+        overall_diff = conrad_projection_matrices-matrices
+        overall_diff = np.sum(overall_diff)
+        if np.abs(overall_diff) >= 3.0:
+            print(overall_diff)
