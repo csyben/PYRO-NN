@@ -15,7 +15,7 @@ def cosine_weights_3d(geometry):
         dv = ((v + 0.5) * geometry.detector_shape[0] - cv)**2
         for u in range(0, geometry.detector_shape[1]):
             du = ((u + 0.5) * geometry.detector_shape[1] - cu)**2
-            w[v, u] = geometry.source_detector_distance / np.sqrt(sd2 + dv + dv)
+            w[v, u] = geometry.source_detector_distance / np.sqrt(sd2 + dv + du)
 
     return w
 
@@ -41,5 +41,4 @@ def parker_weights_fct(beta, gamma, fan_angle):
         return np.sin((np.pi / 4.0) * (2 * fan_angle + np.pi - beta) / (fan_angle - gamma)) ** 2
     elif beta >= np.pi + 2 * fan_angle:
         return 0.0
-
     return 1.0
