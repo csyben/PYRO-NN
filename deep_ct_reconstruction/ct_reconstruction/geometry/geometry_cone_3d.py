@@ -19,6 +19,9 @@ class GeometryCone3D(GeometryBase):
                          number_of_projections, angular_range,
                          source_detector_distance, source_isocenter_distance)
 
+        # defined by geometry so calculate for convenience use
+        self.fan_angle = np.tan(self.detector_shape[1] * self.detector_spacing[1] / 2.0 / self.soure_detector_distance)
+        self.cone_angle = np.tan(self.detector_shape[0] * self.detector_spacing[0] / 2.0 / self.soure_detector_distance)
 
     def set_projection_matrices(self, projection_matrices):
         """
