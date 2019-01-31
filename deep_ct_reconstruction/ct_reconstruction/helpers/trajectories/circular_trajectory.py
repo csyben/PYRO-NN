@@ -53,7 +53,7 @@ def circular_trajectory_3d_pyconrad(geometry): # TODO: still have to get indepen
     DETECTORMOTION_MINUS = _.enumval_from_int('Projection$CameraAxisDirection', 1)
     ROTATIONAXIS_MINUS = _.enumval_from_int('Projection$CameraAxisDirection', 3)
 
-    average_angular_increment = 1.0
+    average_angular_increment = np.degrees(geometry.angular_range/geometry.number_of_projections)
     detector_offset_u = 0
     detector_offset_v = 0
     rotationAxis = _.SimpleVector.from_list([0, 0, 1])
@@ -109,7 +109,7 @@ def circular_trajectory_3d(geometry):
     intrinsic_params_mat[0:2, 2] = (geometry.detector_shape * geometry.detector_spacing)[::-1]
 
     diff_intrinsic = geometry.conrad_intrinsic - intrinsic_params_mat
-    print("diff_intrinsic\n", diff_intrinsic)
+    #print("diff_intrinsic\n", diff_intrinsic)
 
     # configure projection
     projection = np.eye(3, 4)
@@ -149,6 +149,7 @@ def circular_trajectory_3d(geometry):
 
         diff_extrinsic = geometry.conrad_Rt[p] - extrinsic_params_mat
         #print("diff_extrinsic\n", np.sum(diff_extrinsic))
+        #print("diff_extrinsic\n", diff_extrinsic)
         #print("My Matrix Rt:", p ," \n", extrinsic_params_mat)
 
         # calculate projection matrix
@@ -175,7 +176,7 @@ if __name__ == '__main__':
         volume_size = int(np.random.uniform(10, 1000))
         volume_shape = [1*volume_size, 2*volume_size, 3*volume_size]
         volume_spacing = [0.5, 0.5, 0.5]
-        volume_spacing = np.random.uniform(0.1, 1, 3)
+        #volume_spacing = np.random.uniform(0.1, 1, 3)
 
         # Detector Parameters:
         detector_shape = [4*volume_size, 5*volume_size]
@@ -184,7 +185,7 @@ if __name__ == '__main__':
 
         # Trajectory Parameters:
         number_of_projections = int(np.random.uniform(10, 1000))
-        angular_range = int(np.random.uniform(1, 5)) * np.pi
+        angular_range = 2 * np.pi
 
         source_detector_distance = int(np.random.uniform(10, 1000))
         source_isocenter_distance = int(np.random.uniform(10, 1000))
@@ -203,5 +204,4 @@ if __name__ == '__main__':
 
         overall_diff = conrad_projection_matrices-matrices
         overall_diff = np.sum(overall_diff)
-        if np.abs(overall_diff) >= 3.0:
-            print(overall_diff)
+        print(overall_diff)
