@@ -1,5 +1,4 @@
 import numpy as np
-import pyconrad as pyc
 
 
 def circular_trajectory_2d(geometry):
@@ -15,57 +14,6 @@ def circular_trajectory_2d(geometry):
     for i in range(geometry.number_of_projections):
         rays[i] = [np.cos(i * angular_increment), np.sin(i * angular_increment)]
     return rays
-
-
-def circular_trajectory_3d_pyconrad(geometry):
-    """
-        Generates the projection matrices defining a circular trajectory for use with the 3d projection layers.
-    Args:
-        geometry: 3d Geometry class including angular_range, number_of_projections, source_detector_distance,
-        detector_shape, detector_spacing, volume_origin, volume_shape and volume_spacing.
-    Returns:
-        Projection matrices as np.array.
-    """
-
-    _projection_matrix = np.zeros((geometry.number_of_projections, 3, 4))
-
-    pyc.setup_pyconrad()
-    pyc.start_gui()
-
-    _ = pyc.ClassGetter('edu.stanford.rsl.conrad.geometry.trajectories', 'edu.stanford.rsl.conrad.geometry')
-
-    # circ_traj = pyc.edu().stanford.rsl.conrad.geometry.trajectories.CircularTrajectory()
-
-    circ_traj = _.CircularTrajectory()
-    circ_traj.setSourceToDetectorDistance(geometry.source_detector_distance)
-
-    circ_traj.setPixelDimensionX(np.float64(geometry.detector_spacing[1]))
-    circ_traj.setPixelDimensionY(np.float64(geometry.detector_spacing[0]))
-    circ_traj.setDetectorHeight(int(geometry.detector_shape[0]))
-    circ_traj.setDetectorWidth(int(geometry.detector_shape[1]))
-
-    circ_traj.setOriginInPixelsX(np.float64(geometry.volume_origin[2]))
-    circ_traj.setOriginInPixelsY(np.float64(geometry.volume_origin[1]))
-    circ_traj.setOriginInPixelsZ(np.float64(geometry.volume_origin[0]))
-    circ_traj.setReconDimensions(np.flip(geometry.volume_shape).tolist())
-    circ_traj.setReconVoxelSizes(np.flip(geometry.volume_spacing).tolist())
-
-    DETECTORMOTION_MINUS = _.enumval_from_int('Projection$CameraAxisDirection', 1)
-    ROTATIONAXIS_MINUS = _.enumval_from_int('Projection$CameraAxisDirection', 3)
-
-    average_angular_increment = np.degrees(geometry.angular_range/geometry.number_of_projections)
-    detector_offset_u = 0
-    detector_offset_v = 0
-    rotationAxis = _.SimpleVector.from_list([0, 0, 1])
-    center = _.PointND.from_list([0, 0, 0])
-
-    circ_traj.setTrajectory(geometry.number_of_projections, geometry.source_isocenter_distance, average_angular_increment,
-                            detector_offset_u, detector_offset_v, DETECTORMOTION_MINUS, ROTATIONAXIS_MINUS, rotationAxis, center, 0)
-
-    for proj in range(0, geometry.number_of_projections):
-        _projection_matrix[proj] = circ_traj.getProjectionMatrix(proj).computeP().as_numpy()
-
-    return _projection_matrix
 
 
 def circular_trajectory_3d(geometry):
@@ -142,39 +90,3 @@ def circular_trajectory_3d(geometry):
         current_angle += angular_increment
 
     return projection_matrices
-
-from deep_ct_reconstruction.ct_reconstruction.geometry.geometry_cone_3d import GeometryCone3D
-
-# TEST CODE! to be removed later on
-if __name__ == '__main__':
-    # ------------------ Declare Parameters ------------------
-
-    while(True):
-        # Volume Parameters:
-        volume_size = int(np.random.uniform(10, 1000))
-        volume_shape = [1*volume_size, 2*volume_size, 3*volume_size]
-        volume_spacing = [0.5, 0.5, 0.5]
-        volume_spacing = np.random.uniform(0.1, 1, 3)
-
-        # Detector Parameters:
-        detector_shape = [4*volume_size, 5*volume_size]
-        detector_spacing = [0.5, 0.5]
-        detector_spacing = np.random.uniform(0.1, 1, 2)
-
-        # Trajectory Parameters:
-        number_of_projections = int(np.random.uniform(10, 1000))
-        angular_range = 2 * np.pi
-
-        source_detector_distance = int(np.random.uniform(10, 1000))
-        source_isocenter_distance = int(np.random.uniform(10, 1000))
-
-        # create Geometry class
-        geometry = GeometryCone3D(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_projections, angular_range, source_detector_distance, source_isocenter_distance)
-
-        # test vs pyconrad
-        conrad_projection_matrices = circular_trajectory_3d_pyconrad(geometry)
-        matrices = circular_trajectory_3d(geometry)
-
-        overall_diff = conrad_projection_matrices-matrices
-        overall_diff = np.sum(overall_diff)
-        print(overall_diff)
