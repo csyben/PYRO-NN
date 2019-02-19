@@ -43,7 +43,7 @@ def circular_trajectory_3d(geometry):
     # configure intrinsic camera parameters
     intrinsic_params_mat = np.eye(3, 3)
     for i in range(2):
-        intrinsic_params_mat[i, i] = geometry.source_detector_distance
+        intrinsic_params_mat[i, i] = geometry.source_detector_distance / geometry.detector_spacing[1-i]
 
     # calc and set detector origin
     intrinsic_params_mat[0:2, 2] = (geometry.detector_shape * 0.5)[::-1]
