@@ -1,23 +1,24 @@
 import numpy as np
+import math
 
-
+eps = 10e-7
 # code adapted from https://github.com/ma0ho/Deep-Learning-Cone-Beam-CT
 
 # 3d cosine weights
 def cosine_weights_3d(geometry):
-    cu = geometry.detector_shape[1]/2 * geometry.detector_spacing[1]
-    cv = geometry.detector_shape[0]/2 * geometry.detector_spacing[0]
+    cu = (geometry.detector_shape[1]-1)/2 * geometry.detector_spacing[1]
+    cv = (geometry.detector_shape[0]-1)/2 * geometry.detector_spacing[0]
     sd2 = geometry.source_detector_distance**2
 
     w = np.zeros((geometry.detector_shape[1], geometry.detector_shape[0]), dtype=np.float32)
 
     for v in range(0, geometry.detector_shape[0]):
-        dv = ((v + 0.5) * geometry.detector_shape[0] - cv)**2
+        dv = ((v + 0.5) * geometry.detector_spacing[0] - cv)**2
         for u in range(0, geometry.detector_shape[1]):
-            du = ((u + 0.5) * geometry.detector_shape[1] - cu)**2
+            du = ((u + 0.5) * geometry.detector_spacing[1] - cu)**2
             w[v, u] = geometry.source_detector_distance / np.sqrt(sd2 + dv + du)
 
-    return w
+    return np.flip(w)
 
 # parker weights
 def parker_weights_2d(geometry):
@@ -31,7 +32,7 @@ def parker_weights_2d(geometry):
             return 0.0
         return 1.0
 
-    weights = np.zeros(geometry.sinogram_shape)
+    weights = np.zeros(geometry.sinogram_shape.astype(np.int32))
 
     fan_angle = geometry.fan_angle
 
@@ -44,6 +45,68 @@ def parker_weights_2d(geometry):
 
     return weights
 
+def init_parker_1D( geometry, beta, delta ):
+
+    detector_width = geometry.detector_shape[np.alen(geometry.detector_shape)-1].astype(np.int32)
+    detector_spacing_width = geometry.detector_spacing[np.alen(geometry.detector_spacing)-1]
+
+    #beta = geometry.angular_range
+    #delta = math.atan((detector_width-1)/2.0*detector_spacing_width / geometry.source_detector_distance )
+
+    w = np.ones( ( geometry.detector_shape[np.alen(geometry.detector_shape)-1].astype(np.int32) ), dtype = np.float32 )
+
+    for u in range( 0, detector_width ):
+        # current fan angle
+        alpha = math.atan( ( u+0.5 -(detector_width-1)/2 ) *
+                detector_spacing_width / geometry.source_detector_distance )
+
+        if beta >= 0 and beta < 2 * (delta+alpha):
+            # begin of scan
+            w[u] = math.pow( math.sin( math.pi/4 * ( beta / (delta+alpha) ) ), 2 )
+        elif beta >= math.pi + 2*alpha and beta < math.pi + 2*delta:
+            # end of scan
+            w[u] = math.pow( math.sin( math.pi/4 * ( ( math.pi + 2*delta - beta ) / ( delta - alpha ) ) ), 2 )
+        elif beta >= math.pi + 2*delta:
+            # out of range
+            w[u] = 0.0
+
+    return np.flip(w)
+
+
+def init_parker_3D( geometry, primary_angles_rad ):
+    detector_width = geometry.detector_shape[np.alen(geometry.detector_shape) - 1].astype(np.int32)
+    detector_spacing_width = geometry.detector_spacing[np.alen(geometry.detector_spacing) - 1]
+
+    pa = primary_angles_rad
+
+    # normalize angles to [0, 2*pi]
+    pa -= pa[0]
+    pa = np.where( pa < 0, pa + 2*math.pi, pa )
+
+    # find rotation such that max(angles) is minimal
+    tmp = np.reshape( pa, ( pa.size, 1 ) ) - pa
+    tmp = np.where( tmp < 0, tmp + 2*math.pi, tmp )
+    pa = tmp[:, np.argmin( np.max( tmp, 0 ) )]
+
+    # delta = maximum fan_angle
+    delta = math.atan( ( float((detector_width-1) * detector_spacing_width) / 2 ) / geometry.source_detector_distance )
+
+
+    f = lambda pi: init_parker_1D( geometry, pi, delta )
+
+
+    # go over projections
+    w = [
+            np.reshape(
+                f( pa[i] ),
+                ( 1, 1, detector_width )
+            )
+            for i in range( 0, pa.size )
+        ]
+
+    w = np.concatenate( w )
+
+    return w
 
 
 # riess weights
