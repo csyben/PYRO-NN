@@ -16,7 +16,7 @@ def circle(shape, pos, radius, value):
 def ellipse(shape, pos, half_axes, value, theta=0):
 
     # create meshgrid of coords
-    xx, yy = np.mgrid[:shape[1], :shape[0]]
+    xx, yy = np.mgrid[:shape[0], :shape[1]]
 
     # move to pos
     xx = (xx - pos[1])
@@ -99,7 +99,7 @@ if __name__ == '__main__':
 
     # params
     size_x = 200
-    size_y = 200
+    size_y = 300
 
     # circle
     cricle_phantom = circle([size_y, size_x], [50, 50], 30, 1)
