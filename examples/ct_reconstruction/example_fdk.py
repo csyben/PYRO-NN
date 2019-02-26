@@ -74,6 +74,7 @@ def example_cone_3d():
     #geometry.set_projection_matrices(test_trajectory())
     proj, angles = test_trajectory()
     proj2 =  circular_trajectory.circular_trajectory_3d(geometry)
+    proj3 = circular_trajectory_3d_pyconrad(geometry)
     print('proj2')
     print(proj2[0])
     print('shape2')
@@ -130,7 +131,7 @@ def test_trajectory():
 
     number_of_projections = 248
 
-    circ_traj.setTrajectory(number_of_projections , 1200, average_angular_increment,
+    circ_traj.setTrajectory(number_of_projections , 750, average_angular_increment,
                             detector_offset_u, detector_offset_v, DETECTORMOTION_MINUS, ROTATIONAXIS_MINUS,
                             rotationAxis, center, 0)
 
@@ -145,6 +146,57 @@ def test_trajectory():
     print(np.shape(_projection_matrix))
     a = 5
     return _projection_matrix, primary_angles
+
+def circular_trajectory_3d_pyconrad(geometry):
+    """
+        Generates the projection matrices defining a circular trajectory for use with the 3d projection layers.
+    Args:
+        geometry: 3d Geometry class including angular_range, number_of_projections, source_detector_distance,
+        detector_shape, detector_spacing, volume_origin, volume_shape and volume_spacing.
+    Returns:
+        Projection matrices as np.array.
+    """
+
+    _projection_matrix = np.zeros((geometry.number_of_projections, 3, 4))
+
+    pyc.setup_pyconrad()
+
+    _ = pyc.ClassGetter('edu.stanford.rsl.conrad.geometry.trajectories', 'edu.stanford.rsl.conrad.geometry')
+
+    # circ_traj = pyc.edu().stanford.rsl.conrad.geometry.trajectories.CircularTrajectory()
+
+    circ_traj = _.CircularTrajectory()
+    circ_traj.setSourceToDetectorDistance(geometry.source_detector_distance)
+
+    circ_traj.setPixelDimensionX(np.float64(geometry.detector_spacing[1]))
+    circ_traj.setPixelDimensionY(np.float64(geometry.detector_spacing[0]))
+    circ_traj.setDetectorHeight(int(geometry.detector_shape[0]))
+    circ_traj.setDetectorWidth(int(geometry.detector_shape[1]))
+
+    circ_traj.setOriginInPixelsX(np.float64(geometry.volume_origin[2]))
+    circ_traj.setOriginInPixelsY(np.float64(geometry.volume_origin[1]))
+    circ_traj.setOriginInPixelsZ(np.float64(geometry.volume_origin[0]))
+    circ_traj.setReconDimensions(np.flip(geometry.volume_shape).tolist())
+    circ_traj.setReconVoxelSizes(np.flip(geometry.volume_spacing).tolist())
+
+    DETECTORMOTION_MINUS = _.enumval_from_int('Projection$CameraAxisDirection', 1)
+    ROTATIONAXIS_MINUS = _.enumval_from_int('Projection$CameraAxisDirection', 3)
+
+    average_angular_increment = np.degrees(geometry.angular_range/geometry.number_of_projections)
+    detector_offset_u = 0
+    detector_offset_v = 0
+    rotationAxis = _.SimpleVector.from_list([0, 0, 1])
+    center = _.PointND.from_list([0, 0, 0])
+
+    circ_traj.setTrajectory(geometry.number_of_projections, geometry.source_isocenter_distance, average_angular_increment,
+                            detector_offset_u, detector_offset_v, DETECTORMOTION_MINUS, ROTATIONAXIS_MINUS, rotationAxis, center, 0)
+
+    for proj in range(0, geometry.number_of_projections):
+        _projection_matrix[proj] = circ_traj.getProjectionMatrix(proj).computeP().as_numpy()
+
+    return _projection_matrix
+
+
 
 if __name__ == '__main__':
     example_cone_3d()
