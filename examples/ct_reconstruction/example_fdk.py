@@ -29,6 +29,7 @@ class nn_model:
         #TODO: Check primary angles, array should be based on proj mat
         primary_angles = np.arange(0, geometry.angular_range, 0.014067353771074298)[
                          0:geometry.number_of_projections]
+        primary_angles_2 = np.linspace(0, geometry.angular_range, geometry.number_of_projections)
 
         self.redundancy_weight = tf.get_variable(name='redundancy_weight', dtype=tf.float32,
                                              initializer=ct_weights.init_parker_3D(self.geometry,primary_angles), trainable=False)
