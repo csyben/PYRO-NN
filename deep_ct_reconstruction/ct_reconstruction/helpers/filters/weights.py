@@ -47,18 +47,14 @@ def parker_weights_2d(geometry):
 
 def init_parker_1D( geometry, beta, delta ):
 
-    detector_width = geometry.detector_shape[np.alen(geometry.detector_shape)-1].astype(np.int32)
-    detector_spacing_width = geometry.detector_spacing[np.alen(geometry.detector_spacing)-1]
+    detector_width = geometry.detector_shape[-1].astype(np.int32)
+    detector_spacing_width = geometry.detector_spacing[-1]
 
-    #beta = geometry.angular_range
-    #delta = math.atan((detector_width-1)/2.0*detector_spacing_width / geometry.source_detector_distance )
-
-    w = np.ones( ( geometry.detector_shape[np.alen(geometry.detector_shape)-1].astype(np.int32) ), dtype = np.float32 )
+    w = np.ones( ( geometry.detector_shape[-1].astype(np.int32) ), dtype = np.float32 )
 
     for u in range( 0, detector_width ):
         # current fan angle
-        alpha = math.atan( ( u+0.5 -(detector_width-1)/2 ) *
-                detector_spacing_width / geometry.source_detector_distance )
+        alpha = math.atan( ( u+0.5 -(detector_width)/2.0 ) * detector_spacing_width / geometry.source_detector_distance )
 
         if beta >= 0 and beta < 2 * (delta+alpha):
             # begin of scan
@@ -89,8 +85,12 @@ def init_parker_3D( geometry, primary_angles_rad ):
     pa = tmp[:, np.argmin( np.max( tmp, 0 ) )]
 
     # delta = maximum fan_angle
-    delta = math.atan( ( float((detector_width-1) * detector_spacing_width) / 2 ) / geometry.source_detector_distance )
+    delta = math.atan( ( float((detector_width) * detector_spacing_width) / 2 ) / geometry.source_detector_distance )
+    t_range = np.max(pa)
+    max_range = math.pi + 2 * delta
+    offset = (max_range - t_range) / 2
 
+    factor = (t_range + t_range/248) / math.pi
 
     f = lambda pi: init_parker_1D( geometry, pi, delta )
 
@@ -98,11 +98,11 @@ def init_parker_3D( geometry, primary_angles_rad ):
     # go over projections
     w = [
             np.reshape(
-                f( pa[i] ),
-                ( 1, 1, detector_width )
+                f( pa[i] + offset) *factor,
+                (1, 1, detector_width)
             )
-            for i in range( 0, pa.size )
-        ]
+            for i in range( 0 , pa.size)
+    ]
 
     w = np.concatenate( w )
 
