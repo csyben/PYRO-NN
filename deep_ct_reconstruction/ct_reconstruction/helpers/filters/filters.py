@@ -15,10 +15,10 @@ def ramp(detector_width):
     return filter_array.astype(np.float32)
 
 def ram_lak(detector_width, detector_spacing):
-    # TODO: Roll scaling to 0.25
+
     filter_array = np.zeros(detector_width)
-    filter_array[0] = (0.25 / (detector_spacing * detector_spacing)) * 0.25
-    odd = (-1.0 / (pi * pi * detector_spacing * detector_spacing)) * 0.25
+    filter_array[0] = (0.25 / (detector_spacing * detector_spacing))
+    odd = (-1.0 / (pi * pi * detector_spacing * detector_spacing))
 
     for i in range(1, int(filter_array.shape[0])):
         if i < filter_array.shape[0] / 2:
@@ -61,4 +61,4 @@ def ram_lak_3D(geometry):
 
     filter = np.concatenate(filter)
 
-    return filter
+    return (1/1.0) * filter
