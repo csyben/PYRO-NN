@@ -108,12 +108,12 @@ def example_cone_3d():
     # Volume Parameters:
     volume_size = 256
     volume_shape = [volume_size, volume_size, volume_size]
-    v_spacing = 1
+    v_spacing = 0.5
     volume_spacing = [v_spacing,v_spacing,v_spacing]
 
     # Detector Parameters:
-    detector_shape = [500 , 500]#[np.ceil(np.sqrt(2*np.power(volume_size,2))).astype(np.int32)+2,np.ceil(np.sqrt(2*np.power(volume_size,2))).astype(np.int32)+2]
-    d_spacing = 1
+    detector_shape = [500 , 500]
+    d_spacing = 0.5
     detector_spacing = [d_spacing,d_spacing]
 
     # Trajectory Parameters:
