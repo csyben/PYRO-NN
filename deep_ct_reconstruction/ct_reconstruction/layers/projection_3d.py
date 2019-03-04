@@ -3,7 +3,7 @@ import lme_custom_ops
 
 
 # cone_projection3d
-def cone_projection3d(volume, geometry, hardware_interp=False, step_size=1.0):
+def cone_projection3d(volume, geometry, hardware_interp=True, step_size=1.0):
     """
     Wrapper function for making the layer call.
     Args:
