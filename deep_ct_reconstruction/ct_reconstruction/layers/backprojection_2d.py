@@ -58,7 +58,7 @@ def fan_backprojection2d(sinogram, geometry):
                                                detector_spacing           = geometry.tensor_proto_detector_spacing,
                                                source_2_iso_distance      = geometry.source_isocenter_distance,
                                                source_2_detector_distance = geometry.source_detector_distance,
-                                               central_ray_vectors        = geometry.tensor_proto_central_ray_vectors)
+                                               central_ray_vectors        = geometry.to_tensor_proto(geometry.central_ray_vectors))
 
 '''
     Compute the gradient of the backprojector op by invoking the forward projector.
