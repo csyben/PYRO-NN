@@ -1,9 +1,9 @@
 from tensorflow.python.framework import ops
 import lme_custom_ops
 
-
+_used_geometery = None
 # cone_backprojection3d
-def cone_backprojection3d(sinogram, geometry, hardware_interp = False):
+def cone_backprojection3d(sinogram, geometry, hardware_interp = True):
     """
     Wrapper function for making the layer call.
     Args:
@@ -13,11 +13,13 @@ def cone_backprojection3d(sinogram, geometry, hardware_interp = False):
     Returns:
             Initialized lme_custom_ops.cone_backprojection3d layer.
     """
+    _used_geometery = geometry
     return lme_custom_ops.cone_backprojection3d(sinogram, 
                                                 sinogram_shape      = geometry.sinogram_shape,
                                                 volume_shape        = geometry.volume_shape,
                                                 volume_origin       = geometry.tensor_proto_volume_origin,
                                                 volume_spacing      = geometry.tensor_proto_volume_spacing,
+                                                projection_multiplier = geometry.projection_multiplier,
                                                 projection_matrices = geometry.tensor_proto_projection_matrices,
                                                 hardware_interp     = hardware_interp)
 
@@ -34,6 +36,6 @@ def _backproject_grad( op, grad ):
             volume_spacing      = op.get_attr("volume_spacing"),
             projection_matrices = op.get_attr("projection_matrices"),
             hardware_interp     = op.get_attr("hardware_interp"),
-            step_size           = op.get_attr("step_size"),
+            step_size           = _used_geometery.step_size,
         )
     return [ proj ]
