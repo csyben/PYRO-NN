@@ -19,6 +19,60 @@ import pyconrad as pyc
 pyc.setup_pyconrad()
 pyc.start_gui()
 
+
+def medphys_plot():
+    import matplotlib.pyplot as plt
+    path = '/home/syben/Documents/medphys/'
+    _ = pyc.ClassGetter()
+    phantom = pyc.PyGrid.from_tiff(path+'phantom.tif')
+    custom_ops = pyc.PyGrid.from_tiff(path + 'short_fdk_custom_ops_reco.tif')
+    conrad = pyc.PyGrid.from_tiff(path + 'short_fdk_conrad_reco.tif')
+
+    slice = 128
+    row = 128
+
+    phantom_central = np.array(phantom[slice, :, :])
+    custom_ops_central = np.array(custom_ops[slice, :, :])
+    conrad_central = np.array(conrad[slice, :, :])
+
+    gt = phantom_central[row,:]
+    p1 = custom_ops_central[row,:]
+    p2 = conrad_central[row,:]
+
+    fig = plt.figure(figsize=(30, 10))
+    number_of_collumns = 6
+    number_of_rows = 3
+    img_one = plt.subplot2grid((number_of_rows, number_of_collumns), (0, 0), colspan=2,rowspan=3)
+
+    plot_one = plt.subplot2grid((number_of_rows, number_of_collumns), (0, 2), colspan=4, rowspan=3)  # , sharex=img_one)
+
+
+    img_width = np.shape(phantom_central)[0]
+    img_one.plot((0, img_width), (row, row), '--', linewidth=5)
+
+    img_one.imshow(phantom_central, cmap=plt.get_cmap('gist_gray'), vmin=0, vmax=0.4)
+    img_one.axis('off')
+    img_one.set_title('Central Slice NN Reconstruction', fontsize=35, y=1.05)
+
+
+    plot_one.plot(np.arange(len(gt)), gt, color='#1f77b4')
+    plot_one.plot(np.arange(len(p1)), p1, color='lightgreen')
+    plot_one.plot(np.arange(len(p2)), p2, linestyle=':', color='red')
+
+    min_plt = 0
+    max_plt = 1.1
+
+    plot_one.set_ylim(plt.ylim((min_plt, max_plt)))
+    plot_one.legend(['Shepp-Logan Phantom', 'NN Reconstruction', 'CONRAD Reconstruction'], loc='upper center', prop={'size': 35})
+    #plt.savefig('evaluation/eval_img/' + experiment_img_name + '.png', dpi=150, transparent=False, bbox_inches='tight')
+    plt.gcf().tight_layout(h_pad=0, w_pad=0)
+
+    plt.savefig(path + 'fdk_eval.png', dpi=150, transparent=False, bbox_inches='tight')
+
+    fig.show()
+
+    a = 5
+
 class nn_model:
     def __init__(self, geometry):
         self.geometry = geometry
@@ -26,13 +80,10 @@ class nn_model:
         self.cosine_weight = tf.get_variable(name='cosine_weight', dtype=tf.float32,
                                              initializer=ct_weights.cosine_weights_3d(self.geometry), trainable=False)
 
-        #TODO: Check primary angles, array should be based on proj mat
-        primary_angles = np.arange(0, geometry.angular_range, 0.014067353771074298)[
-                         0:geometry.number_of_projections]
         primary_angles_2 = np.linspace(0, geometry.angular_range, geometry.number_of_projections)
 
         self.redundancy_weight = tf.get_variable(name='redundancy_weight', dtype=tf.float32,
-                                             initializer=ct_weights.init_parker_3D(self.geometry,primary_angles), trainable=False)
+                                             initializer=ct_weights.init_parker_3D(self.geometry,primary_angles_2), trainable=False)
 
         self.filter = tf.get_variable(name='reco_filter', dtype=tf.float32, initializer=ram_lak_3D(self.geometry), trainable=False)
 
@@ -57,11 +108,13 @@ def example_cone_3d():
     # Volume Parameters:
     volume_size = 256
     volume_shape = [volume_size, volume_size, volume_size]
-    volume_spacing = [0.5, 0.5, 0.5]
+    v_spacing = 1
+    volume_spacing = [v_spacing,v_spacing,v_spacing]
 
     # Detector Parameters:
-    detector_shape = [400 , 400]#[np.ceil(np.sqrt(2*np.power(volume_size,2))).astype(np.int32)+2,np.ceil(np.sqrt(2*np.power(volume_size,2))).astype(np.int32)+2]
-    detector_spacing = [0.5, 0.5]
+    detector_shape = [500 , 500]#[np.ceil(np.sqrt(2*np.power(volume_size,2))).astype(np.int32)+2,np.ceil(np.sqrt(2*np.power(volume_size,2))).astype(np.int32)+2]
+    d_spacing = 1
+    detector_spacing = [d_spacing,d_spacing]
 
     # Trajectory Parameters:
     number_of_projections = 248
@@ -72,26 +125,24 @@ def example_cone_3d():
 
     # create Geometry class
     geometry = GeometryCone3D(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_projections, angular_range, source_detector_distance, source_isocenter_distance)
-    #geometry.set_projection_matrices(test_trajectory())
-    proj, angles = test_trajectory()
-    proj2 =  circular_trajectory.circular_trajectory_3d(geometry)
-    proj3 = circular_trajectory_3d_pyconrad(geometry)
-    print('proj2')
-    print(proj2[0])
-    print('shape2')
-    print(np.shape(proj2))
-    geometry.set_projection_matrices(proj)
+    projection_geometry =  circular_trajectory.circular_trajectory_3d(geometry)
+
+    geometry.set_projection_matrices(projection_geometry)
     #geometry.set_projection_matrices(circular_trajectory.circular_trajectory_3d(geometry))
     #print(geometry.projection_matrices[0])
     # Get Phantom 3d
     phantom = shepp_logan.shepp_logan_3d(volume_shape)
     pyc.imshow(phantom, 'phantom')
 
-    sinogram = generate_sinogram.generate_sinogram(phantom,cone_projection3d,geometry)
-    pyc.imshow(sinogram, 'sinogram')
 
+
+    config = tf.ConfigProto()
+    config.gpu_options.per_process_gpu_memory_fraction = 0.5
+    config.gpu_options.allow_growth = True
     # ------------------ Call Layers ------------------
-    with tf.Session() as sess:
+    with tf.Session(config=config) as sess:
+        sinogram = generate_sinogram.generate_sinogram(phantom, cone_projection3d, geometry)
+        pyc.imshow(sinogram, 'sinogram')
 
         model = nn_model(geometry)
         sess.run(tf.global_variables_initializer())
@@ -99,105 +150,12 @@ def example_cone_3d():
         reco_tf, redundancy_weighted_sino_tf = model.model(sinogram)
         reco, redundancy_weighted_sino = sess.run([reco_tf, redundancy_weighted_sino_tf])
     pyc.imshow(reco,'reco')
-    pyc.imshow(redundancy_weighted_sino, 'redundancy_weighted_sino')
+    #pyc.imshow(redundancy_weighted_sino, 'redundancy_weighted_sino')
     a=5
 
-def test_trajectory():
-    _ = pyc.ClassGetter('edu.stanford.rsl.conrad.geometry.trajectories', 'edu.stanford.rsl.conrad.geometry')
-
-    circ_traj = pyc.edu().stanford.rsl.conrad.geometry.trajectories.CircularTrajectory()
-
-    circ_traj = _.CircularTrajectory()
-    circ_traj.setSourceToDetectorDistance(1200)
-
-    circ_traj.setPixelDimensionX(0.5)
-    circ_traj.setPixelDimensionY(0.5)
-    circ_traj.setDetectorHeight(400)
-    circ_traj.setDetectorWidth(400)
-
-    circ_traj.setOriginInPixelsX((256 - 1) / 2.0)
-    circ_traj.setOriginInPixelsY((256 - 1) / 2.0)
-    circ_traj.setOriginInPixelsZ((256 - 1) / 2.0)
-    circ_traj.setReconDimensions([256, 256, 256])
-    circ_traj.setReconVoxelSizes(np.array([0.5, 0.5, 0.5]))
-
-    DETECTORMOTION_MINUS = _.enumval_from_int('Projection$CameraAxisDirection', 0)
-    ROTATIONAXIS_MINUS = _.enumval_from_int('Projection$CameraAxisDirection', 2)
-
-    average_angular_increment = 0.806
-    detector_offset_u = 0
-    detector_offset_v = 0
-    rotationAxis = _.SimpleVector.from_list([0, 0, 1])
-    center = _.PointND.from_list([0, 0, 0])
-
-    number_of_projections = 248
-
-    circ_traj.setTrajectory(number_of_projections , 750, average_angular_increment,
-                            detector_offset_u, detector_offset_v, DETECTORMOTION_MINUS, ROTATIONAXIS_MINUS,
-                            rotationAxis, center, 0)
-
-    _projection_matrix = np.zeros((number_of_projections, 3, 4))
-    primary_angles = np.array(circ_traj.getPrimaryAngles())
-    for proj in range(0, number_of_projections):
-        _projection_matrix[proj] = circ_traj.getProjectionMatrix(proj).computeP().as_numpy()
-
-    print('TRAJ TEST')
-    print(_projection_matrix[0])
-    print('shape')
-    print(np.shape(_projection_matrix))
-    a = 5
-    return _projection_matrix, primary_angles
-
-def circular_trajectory_3d_pyconrad(geometry):
-    """
-        Generates the projection matrices defining a circular trajectory for use with the 3d projection layers.
-    Args:
-        geometry: 3d Geometry class including angular_range, number_of_projections, source_detector_distance,
-        detector_shape, detector_spacing, volume_origin, volume_shape and volume_spacing.
-    Returns:
-        Projection matrices as np.array.
-    """
-
-    _projection_matrix = np.zeros((geometry.number_of_projections, 3, 4))
-
-    pyc.setup_pyconrad()
-
-    _ = pyc.ClassGetter('edu.stanford.rsl.conrad.geometry.trajectories', 'edu.stanford.rsl.conrad.geometry')
-
-    # circ_traj = pyc.edu().stanford.rsl.conrad.geometry.trajectories.CircularTrajectory()
-
-    circ_traj = _.CircularTrajectory()
-    circ_traj.setSourceToDetectorDistance(geometry.source_detector_distance)
-
-    circ_traj.setPixelDimensionX(np.float64(geometry.detector_spacing[1]))
-    circ_traj.setPixelDimensionY(np.float64(geometry.detector_spacing[0]))
-    circ_traj.setDetectorHeight(int(geometry.detector_shape[0]))
-    circ_traj.setDetectorWidth(int(geometry.detector_shape[1]))
-
-    circ_traj.setOriginInPixelsX(np.float64(geometry.volume_origin[2]))
-    circ_traj.setOriginInPixelsY(np.float64(geometry.volume_origin[1]))
-    circ_traj.setOriginInPixelsZ(np.float64(geometry.volume_origin[0]))
-    circ_traj.setReconDimensions(np.flip(geometry.volume_shape).tolist())
-    circ_traj.setReconVoxelSizes(np.flip(geometry.volume_spacing).tolist())
-
-    DETECTORMOTION_MINUS = _.enumval_from_int('Projection$CameraAxisDirection', 1)
-    ROTATIONAXIS_MINUS = _.enumval_from_int('Projection$CameraAxisDirection', 3)
-
-    average_angular_increment = np.degrees(geometry.angular_range/geometry.number_of_projections)
-    detector_offset_u = 0
-    detector_offset_v = 0
-    rotationAxis = _.SimpleVector.from_list([0, 0, 1])
-    center = _.PointND.from_list([0, 0, 0])
-
-    circ_traj.setTrajectory(geometry.number_of_projections, geometry.source_isocenter_distance, average_angular_increment,
-                            detector_offset_u, detector_offset_v, DETECTORMOTION_MINUS, ROTATIONAXIS_MINUS, rotationAxis, center, 0)
-
-    for proj in range(0, geometry.number_of_projections):
-        _projection_matrix[proj] = circ_traj.getProjectionMatrix(proj).computeP().as_numpy()
-
-    return _projection_matrix
 
 
 
 if __name__ == '__main__':
+    #medphys_plot()
     example_cone_3d()
