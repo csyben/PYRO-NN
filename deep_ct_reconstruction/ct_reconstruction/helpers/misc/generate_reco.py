@@ -1,5 +1,7 @@
-import lme_custom_ops
 import tensorflow as tf
+from ...layers.backprojection_2d import parallel_backprojection2d
+from ...layers.backprojection_2d import fan_backprojection2d
+from ...layers.backprojection_3d import cone_backprojection3d
 
 
 def generate_reco(sinogram, layer, geometry):
@@ -8,18 +10,20 @@ def generate_reco(sinogram, layer, geometry):
         sinogram = result.eval()
     return sinogram
 
+
 def generate_reco_parallel_2d(phantom, geometry):
-    result = lme_custom_ops.parallel_backprojection2d(phantom, geometry)
+    result = parallel_backprojection2d(phantom, geometry)
     sinogram = result.eval()
     return sinogram
+
 
 def generate_reco_fan_2d(phantom, geometry):
-    result = lme_custom_ops.fan_backprojection2d(phantom, geometry)
+    result = fan_backprojection2d(phantom, geometry)
     sinogram = result.eval()
     return sinogram
+
 
 def generate_reco_cone_3d(phantom, geometry):
-    result = lme_custom_ops.cone_backprojection3d(phantom, geometry)
+    result = cone_backprojection3d(phantom, geometry)
     sinogram = result.eval()
     return sinogram
-
