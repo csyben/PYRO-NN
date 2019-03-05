@@ -8,6 +8,7 @@ pyc.setup_pyconrad()
 from deep_ct_reconstruction.ct_reconstruction.layers.projection_2d import parallel_projection2d
 from deep_ct_reconstruction.ct_reconstruction.layers.backprojection_2d import parallel_backprojection2d
 from deep_ct_reconstruction.ct_reconstruction.geometry.geometry_parallel_2d import GeometryParallel2D
+from deep_ct_reconstruction.ct_reconstruction.helpers.filters import filters
 from deep_ct_reconstruction.ct_reconstruction.helpers.phantoms import shepp_logan
 from deep_ct_reconstruction.ct_reconstruction.helpers.trajectories import circular_trajectory
 
@@ -16,16 +17,16 @@ def example_parallel_2d():
     # ------------------ Declare Parameters ------------------
 
     # Volume Parameters:
-    volume_size = 200
+    volume_size = 512
     volume_shape = [volume_size, volume_size]
     volume_spacing = [0.5, 0.5]
 
     # Detector Parameters:
-    detector_shape = 2*volume_size
+    detector_shape = 625
     detector_spacing = 0.5
 
     # Trajectory Parameters:
-    number_of_projections = 100
+    number_of_projections = 30
     angular_range = np.pi
 
     # create Geometry class
@@ -41,9 +42,19 @@ def example_parallel_2d():
     with tf.Session() as sess:
         result = parallel_projection2d(phantom, geometry)
         sinogram = result.eval()
+
+        sinogram = sinogram + np.random.normal(
+            loc=np.mean(np.abs(sinogram)), scale=np.std(sinogram), size=sinogram.shape) * 0.02
+
         pyc.imshow(sinogram, 'sinogram')
 
-        result_back_proj = parallel_backprojection2d(sinogram, geometry)
+        reco_filter = filters.ram_lak_2D(geometry)
+
+        sino_freq = np.fft.fft(sinogram, axis=1)
+        sino_filtered_freq = np.multiply(sino_freq,reco_filter)
+        sinogram_filtered = np.fft.ifft(sino_filtered_freq, axis=1)
+
+        result_back_proj = parallel_backprojection2d(sinogram_filtered, geometry)
         reco = result_back_proj.eval()
         pyc.imshow(reco, 'reco')
 
