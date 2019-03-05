@@ -151,3 +151,138 @@ def riess_weights_2d(geometry):
 
     return weights
 
+def testParker3d():
+    from deep_ct_reconstruction.ct_reconstruction.geometry.geometry_cone_3d import GeometryCone3D
+    from deep_ct_reconstruction.ct_reconstruction.helpers.trajectories import circular_trajectory
+    import pyconrad as pyc
+    pyc.setup_pyconrad()
+    pyc.start_gui()
+
+    # Volume Parameters:
+    volume_size = 256
+    volume_shape = [volume_size, volume_size, volume_size]
+    v_spacing = 0.5
+    volume_spacing = [v_spacing,v_spacing,v_spacing]
+
+    # Detector Parameters:
+    detector_shape = [500 , 500]
+    d_spacing = 0.5
+    detector_spacing = [d_spacing,d_spacing]
+
+    # Trajectory Parameters:
+    number_of_projections = 248
+    angular_range = math.radians(200) #200 * np.pi / 180
+
+    source_detector_distance = 1200
+    source_isocenter_distance = 750
+
+    # create Geometry class
+    geometry = GeometryCone3D(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_projections, angular_range, source_detector_distance, source_isocenter_distance)
+    geometry.set_projection_matrices(circular_trajectory.circular_trajectory_3d(geometry))
+
+    primary_angles_2 = np.linspace(0, geometry.angular_range, geometry.number_of_projections)
+
+    our_weights = np.squeeze(init_parker_3D(geometry, primary_angles_2)).T
+    conrad_weights = parker_weights_conrad(geometry)
+    diff = our_weights - conrad_weights
+
+    pyc.imshow(our_weights, 'our_weights')
+    pyc.imshow(conrad_weights, 'conrad_weights')
+    pyc.imshow(diff, 'diff')
+
+
+def parker_weights_conrad_3d(geometry):
+    return np.array(np.expand_dims(parker_weights_conrad(geometry).T, axis=1), dtype=np.float32)
+
+
+def parker_weights_conrad(geometry):
+
+    focalLength = geometry.source_detector_distance
+    maxT = geometry.detector_shape[1]*geometry.detector_spacing[1]
+    deltaT = geometry.detector_spacing[1]
+    maxBeta = geometry.angular_range
+    deltaBeta = geometry.angular_range/geometry.number_of_projections
+
+    # Initialize parameters
+    maxBetaIndex = int(np.round(maxBeta / deltaBeta))
+    maxTIndex = int(np.round(maxT / deltaT))
+    gammaM =  np.arctan((maxT / 2.0)/ focalLength)
+    beta = 0
+    alpha = 0
+
+    output_weights = np.zeros((maxTIndex, maxBetaIndex))
+
+    # iterate over the detector elements
+    for t in range(maxTIndex):
+        # compute alpha of the current ray (detector element)
+        alpha = np.arctan((t * deltaT - maxT / 2.0 + 0.5*deltaT) / focalLength)
+        
+        # iterate over the projection angles
+        for b in range(maxBetaIndex):
+            beta = b * deltaBeta
+            
+            # Shift weights such that they are centered (Important for maxBeta < pi + 2 * gammaM)
+            beta += (np.pi+2*gammaM-maxBeta)/2.0
+            
+            # Adjust beta if out of range [0, 2*pi]
+            if (beta < 0): 
+                continue
+            
+            if (beta > np.pi *2.0): 
+                continue
+            
+            # implement the conditions as described in Parker's paper
+            if (beta <= 2 * (gammaM - alpha)): 
+                tmp = beta * np.pi / 4.0 / (gammaM - alpha)
+                val = np.sin(tmp)**2.0
+                
+                if (val is np.nan):
+                    continue
+                
+                output_weights[t, b] = val
+
+            elif (beta < np.pi - 2.0 * alpha):
+                output_weights[t, b] = 1
+            
+            elif (beta <= (np.pi + 2.0 * gammaM) + 1e-12): 
+                tmp = (np.pi / 4.0) * ( (np.pi + 2.0*gammaM - beta) / (gammaM + alpha) )
+                val = np.sin(tmp)**2.0
+                if (val is np.nan):
+                    continue
+
+                output_weights[t, b] = val
+   
+    # Correct for scaling due to varying angle
+    output_weights = output_weights *  maxBeta / np.pi
+
+    return output_weights
+
+
+def testParker2d():
+    from deep_ct_reconstruction.ct_reconstruction.geometry.geometry_fan_2d import GeometryFan2D
+    from deep_ct_reconstruction.ct_reconstruction.helpers.trajectories import circular_trajectory
+
+    # Volume Parameters:
+    volume_size = 512
+    volume_shape = [volume_size, volume_size]
+    volume_spacing = [0.5, 0.5]
+
+    # Detector Parameters:
+    detector_shape = 800
+    detector_spacing = 0.5
+
+    # Trajectory Parameters:
+    number_of_projections = 360
+    angular_range = 2 * np.pi
+
+    source_detector_distance = 1200
+    source_isocenter_distance = 750
+
+    # create Geometry class
+    geometry = GeometryFan2D(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_projections, angular_range, source_detector_distance, source_isocenter_distance)
+    geometry.set_central_ray_vectors(circular_trajectory.circular_trajectory_2d(geometry))
+
+
+if __name__ == '__main__':
+    testParker3d()
+    testParker2d()
