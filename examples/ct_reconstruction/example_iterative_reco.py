@@ -36,7 +36,7 @@ def iterative_reconstruction():
     geometry = GeometryParallel2D(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_projections, angular_range)
     geometry.set_ray_vectors(circular_trajectory.circular_trajectory_2d(geometry))
 
-    phantom = shepp_logan.shepp_logan(volume_size)
+    phantom = shepp_logan.shepp_logan(volume_shape)
 
     config = tf.ConfigProto()
     config.gpu_options.per_process_gpu_memory_fraction = 0.5

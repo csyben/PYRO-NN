@@ -37,7 +37,7 @@ def example_fan_2d():
     geometry.set_central_ray_vectors(circular_trajectory.circular_trajectory_2d(geometry))
 
     # Get Phantom
-    phantom = shepp_logan.shepp_logan(volume_size)
+    phantom = shepp_logan.shepp_logan(volume_shape)
     pyc.imshow(phantom, 'phantom')
 
 
