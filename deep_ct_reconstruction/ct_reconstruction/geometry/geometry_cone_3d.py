@@ -12,7 +12,6 @@ class GeometryCone3D(GeometryBase):
                  detector_shape, detector_spacing,
                  number_of_projections, angular_range,
                  source_detector_distance, source_isocenter_distance):
-
         # init base Geometry class with 3 dimensional members:
         super().__init__(volume_shape, volume_spacing,
                          detector_shape, detector_spacing,
@@ -20,11 +19,14 @@ class GeometryCone3D(GeometryBase):
                          source_detector_distance, source_isocenter_distance)
 
         # defined by geometry so calculate for convenience use
-        self.fan_angle  = np.arctan(self.detector_shape[1] * self.detector_spacing[1] / 2.0 / self.source_detector_distance)
-        self.cone_angle = np.arctan(self.detector_shape[0] * self.detector_spacing[0] / 2.0 / self.source_detector_distance)
+        self.fan_angle = np.arctan(
+            self.detector_shape[1] * self.detector_spacing[1] / 2.0 / self.source_detector_distance)
+        self.cone_angle = np.arctan(
+            self.detector_shape[0] * self.detector_spacing[0] / 2.0 / self.source_detector_distance)
         # Containing the constant part of the distance weight and discretization invariant
         # TODO: include detector_spacing less  error-prone
-        self.projection_multiplier = self.source_isocenter_distance * self.source_detector_distance * detector_spacing[0] * np.pi / self.number_of_projections
+        self.projection_multiplier = self.source_isocenter_distance * self.source_detector_distance * detector_spacing[
+            0] * np.pi / self.number_of_projections
 
     def set_projection_matrices(self, projection_matrices):
         """

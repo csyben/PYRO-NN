@@ -11,7 +11,6 @@ class GeometryParallel2D(GeometryBase):
                  volume_shape, volume_spacing,
                  detector_shape, detector_spacing,
                  number_of_projections, angular_range):
-
         # init base selfmetry class with 2 dimensional members:
         super().__init__(volume_shape, volume_spacing,
                          [detector_shape], [detector_spacing],
