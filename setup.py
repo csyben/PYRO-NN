@@ -2,7 +2,7 @@ __author__ = "Christopher Syben <christopher.syben@fau.de>"
 __copyright__ = "Christopher Syben <christopher.syben@fau.de>"
 __license__ = """
 deeptomo, python framework for convenient use of the ct reconstructions algorithms provided within Tensorflow
-Copyright (C) 2017 Christopher Syben <christopher.syben@fau.de>
+Copyright (C) 2019 Christopher Syben <christopher.syben@fau.de>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
