@@ -1,4 +1,3 @@
-import pyconrad
 import numpy as np
 
 
@@ -132,11 +131,6 @@ def shepp_logan_mod(shape):
     return np.flip(shepp_logan, axis=0)
 
 
-def shepp_logan_3d_conrad(shape): # shape is array in Z, Y, X so flip in pyconrad call
-    _ = pyconrad.ClassGetter('edu.stanford.rsl.conrad.phantom')
-    return _.NumericalSheppLogan3D(*np.flip(shape).tolist()).getNumericalSheppLoganPhantom().as_numpy()
-
-
 def shepp_logan_3d(shape):
     """
         Creates a Shepp Logan like 3d Phantom. Definition adopted from CONRAD.
@@ -217,16 +211,3 @@ def shepp_logan_3d(shape):
         shepp_logan = shepp_logan + (ellipse_points <= 1) * value
 
     return shepp_logan
-
-import pyconrad as pyc
-pyc.setup_pyconrad()
-pyc.start_gui()
-
-if __name__ == "__main__":
-
-    for i in range(100):
-        volume_shape = np.array(np.random.uniform(10, 500, 3), dtype=np.int32)
-        shepp_conrad = shepp_logan_3d_conrad(volume_shape)
-        my_shepp = shepp_logan_3d(volume_shape)
-        diff = my_shepp - shepp_conrad
-        print(np.sum(diff))
