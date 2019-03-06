@@ -66,7 +66,7 @@ def init_parker_1D( geometry, beta, delta ):
             # out of range
             w[u] = 0.0
 
-    return np.flip(w)
+    return w#np.flip(w)
 
 
 def init_parker_3D( geometry, primary_angles_rad ):
@@ -90,7 +90,7 @@ def init_parker_3D( geometry, primary_angles_rad ):
     max_range = math.pi + 2 * delta
     offset = (max_range - t_range) / 2
 
-    factor = (t_range + t_range/248) / math.pi
+    factor = (t_range + t_range/geometry.number_of_projections) / math.pi
 
     f = lambda pi: init_parker_1D( geometry, pi, delta )
 
