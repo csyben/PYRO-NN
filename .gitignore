@@ -1,0 +1,9 @@
+#ignore ide stuff
+.idea/
+__pycache__/
+
+#ignore built stuff
+build/
+dist/
+*.egg-info/
+
