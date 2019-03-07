@@ -88,7 +88,7 @@ def init_parker_3D(geometry, primary_angles_rad):
     pa = tmp[:, np.argmin(np.max(tmp, 0))]
 
     # delta = maximum fan_angle
-    delta = math.atan((float((detector_width) * detector_spacing_width) / 2) / geometry.source_detector_distance)
+    delta = math.atan((float((detector_width) ) / 2) / geometry.source_detector_distance)
     t_range = np.max(pa)
     max_range = math.pi + 2 * delta
     offset = (max_range - t_range) / 2
