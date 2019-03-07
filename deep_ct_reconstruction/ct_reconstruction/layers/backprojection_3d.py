@@ -1,6 +1,7 @@
 from tensorflow.python.framework import ops
 import lme_custom_ops
 
+
 # cone_backprojection3d
 def cone_backprojection3d(sinogram, geometry, hardware_interp=True):
     """
@@ -20,8 +21,6 @@ def cone_backprojection3d(sinogram, geometry, hardware_interp=True):
                                                 projection_multiplier=geometry.projection_multiplier,
                                                 projection_matrices=geometry.tensor_proto_projection_matrices,
                                                 hardware_interp=hardware_interp)
-
-
 
 
 @ops.RegisterGradient("ConeBackprojection3D")
