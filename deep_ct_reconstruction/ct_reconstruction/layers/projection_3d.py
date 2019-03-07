@@ -40,7 +40,7 @@ def _project_grad(op, grad):
         volume_shape=op.get_attr("volume_shape"),
         volume_origin=op.get_attr("volume_origin"),
         volume_spacing=op.get_attr("volume_spacing"),
-        projection_multiplier=_used_geometery.projection_multipier,
+        projection_multiplier=op.get_attr("projection_multiplier"),
         projection_matrices=op.get_attr("projection_matrices"),
         hardware_interp=op.get_attr("hardware_interp"),
     )

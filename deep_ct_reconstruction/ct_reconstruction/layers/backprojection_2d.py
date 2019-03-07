@@ -63,14 +63,11 @@ def fan_backprojection2d(sinogram, geometry):
                                                source_2_detector_distance=geometry.source_detector_distance,
                                                central_ray_vectors=geometry.tensor_proto_central_ray_vectors)
 
-
-'''
-    Compute the gradient of the backprojector op by invoking the forward projector.
-'''
-
-
 @ops.RegisterGradient("FanBackprojection2D")
 def _backproject_grad(op, grad):
+    '''
+        Compute the gradient of the backprojector op by invoking the forward projector.
+    '''
     proj = lme_custom_ops.fan_projection2d(
         volume=grad,
         volume_shape=op.get_attr("volume_shape"),
