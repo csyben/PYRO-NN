@@ -1,8 +1,6 @@
 from tensorflow.python.framework import ops
 import lme_custom_ops
 
-_used_geometery = None
-
 
 # cone_projection3d
 def cone_projection3d(volume, geometry, hardware_interp=True, step_size=1.0):
@@ -16,7 +14,7 @@ def cone_projection3d(volume, geometry, hardware_interp=True, step_size=1.0):
     Returns:
             Initialized lme_custom_ops.cone_projection3d layer.
     """
-    _used_geometery = geometry
+
     return lme_custom_ops.cone_projection3d(volume,
                                             volume_shape=geometry.volume_shape,
                                             projection_shape=geometry.sinogram_shape,
@@ -27,13 +25,11 @@ def cone_projection3d(volume, geometry, hardware_interp=True, step_size=1.0):
                                             step_size=step_size)
 
 
-'''
-    Compute the gradient of the projection op by invoking the backprojector.
-'''
-
-
 @ops.RegisterGradient("ConeProjection3D")
 def _project_grad(op, grad):
+    '''
+    Compute the gradient of the projection op by invoking the backprojector.
+    '''
     reco = lme_custom_ops.cone_backprojection3d(
         sinogram=grad,
         sinogram_shape=op.get_attr("projection_shape"),
