@@ -31,21 +31,21 @@ class GeometryBase:
         self.np_dtype = np.float32  # datatype for np.arrays make sure everything will be float32
 
         # Volume Parameters:
-        self.volume_shape   = np.array(volume_shape)
+        self.volume_shape = np.array(volume_shape)
         self.volume_spacing = np.array(volume_spacing, dtype=self.np_dtype)
-        self.volume_origin  = -(self.volume_shape - 1) / 2.0 * self.volume_spacing
+        self.volume_origin = -(self.volume_shape - 1) / 2.0 * self.volume_spacing
 
         # Detector Parameters:
-        self.detector_shape   = np.array(detector_shape)
+        self.detector_shape = np.array(detector_shape)
         self.detector_spacing = np.array(detector_spacing, dtype=self.np_dtype)
-        self.detector_origin  = -(self.detector_shape - 1) / 2.0 * self.detector_spacing
+        self.detector_origin = -(self.detector_shape - 1) / 2.0 * self.detector_spacing
 
         # Trajectory Parameters:
         self.number_of_projections = number_of_projections
-        self.angular_range         = angular_range
-        self.sinogram_shape        = np.array([self.number_of_projections, *self.detector_shape])
+        self.angular_range = angular_range
+        self.sinogram_shape = np.array([self.number_of_projections, *self.detector_shape])
 
-        self.source_detector_distance  = source_detector_distance
+        self.source_detector_distance = source_detector_distance
         self.source_isocenter_distance = source_isocenter_distance
 
     def to_tensor_proto(self, member):
@@ -67,7 +67,6 @@ class GeometryBase:
 
         def __set__(self, obj, value):
             return self.func(obj, value)
-
 
     @SetTensorProtoProperty
     def volume_shape(self, value):
@@ -103,4 +102,3 @@ class GeometryBase:
     def sinogram_shape(self, value):
         self.__dict__['sinogram_shape'] = value
         self.tensor_proto_sinogram_shape = self.to_tensor_proto(self.sinogram_shape)
-

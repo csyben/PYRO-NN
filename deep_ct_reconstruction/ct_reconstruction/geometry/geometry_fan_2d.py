@@ -12,7 +12,6 @@ class GeometryFan2D(GeometryBase):
                  detector_shape, detector_spacing,
                  number_of_projections, angular_range,
                  source_detector_distance, source_isocenter_distance):
-
         # init base Geometry class with 2 dimensional members:
         super().__init__(volume_shape, volume_spacing,
                          [detector_shape], [detector_spacing],
@@ -20,8 +19,8 @@ class GeometryFan2D(GeometryBase):
                          source_detector_distance, source_isocenter_distance)
 
         # defined by geometry so calculate for convenience use
-        self.fan_angle = np.arctan(self.detector_shape[0] * self.detector_spacing[0] / 2.0 / self.source_detector_distance)
-
+        self.fan_angle = np.arctan(
+            self.detector_shape[0] * self.detector_spacing[0] / 2.0 / self.source_detector_distance)
 
     def set_central_ray_vectors(self, central_ray_vectors):
         """

@@ -37,23 +37,21 @@ def circular_trajectory_3d(geometry):
     z_axis = np.array([0.0, 0.0, 1.0])
 
     # defining u and v directions by: main coord axes
-    u_dir =  y_axis
+    u_dir = y_axis
     v_dir = -x_axis
 
     # configure intrinsic camera parameters
     intrinsic_params_mat = np.eye(3, 3)
     for i in range(2):
-        intrinsic_params_mat[i, i] = geometry.source_detector_distance / geometry.detector_spacing[1-i]
+        intrinsic_params_mat[i, i] = geometry.source_detector_distance / geometry.detector_spacing[1 - i]
 
     # calc and set detector origin
     intrinsic_params_mat[0:2, 2] = (geometry.detector_shape * 0.5)[::-1]
 
-
     # configure extrinisc pararams and create projection_matrices
     current_angle = 0.0
-    angular_increment = geometry.angular_range/geometry.number_of_projections
+    angular_increment = geometry.angular_range / geometry.number_of_projections
     for p in range(geometry.number_of_projections):
-
         # calculate extrinsic params
         extrinsic_params_mat = np.eye(4, 4)
 
@@ -70,9 +68,9 @@ def circular_trajectory_3d(geometry):
 
         # rotation about x axis
         R_x_axis = np.eye(4, 4)
-        R_x_axis[0:3, 0:3] = np.array([1,                      0,                      0,
-                                       0,  np.cos(-current_angle), -np.sin(-current_angle),
-                                       0,  np.sin(-current_angle),  np.cos(-current_angle)]).reshape((3, 3))
+        R_x_axis[0:3, 0:3] = np.array([1, 0, 0,
+                                       0, np.cos(-current_angle), -np.sin(-current_angle),
+                                       0, np.sin(-current_angle), np.cos(-current_angle)]).reshape((3, 3))
 
         # translation of camera
         translation = np.eye(4, 4)

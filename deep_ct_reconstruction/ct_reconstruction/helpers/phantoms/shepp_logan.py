@@ -30,8 +30,8 @@ def shepp_logan(shape):
     yy_base, xx_base = np.mgrid[:shape[0], :shape[1]]
 
     # center at 0, 0 and normalize
-    xx_base = (xx_base - (shape[1]-1)/2) / ((shape[1]-1)/2)
-    yy_base = (yy_base - (shape[0]-1)/2) / ((shape[0]-1)/2)
+    xx_base = (xx_base - (shape[1] - 1) / 2) / ((shape[1] - 1) / 2)
+    yy_base = (yy_base - (shape[0] - 1) / 2) / ((shape[0] - 1) / 2)
 
     # definition of ellipses as np.array:
     el_params = np.array([[0     ,0	      ,0.69	    ,0.92	,0	             ,2     ],
@@ -89,8 +89,8 @@ def shepp_logan_mod(shape):
     yy_base, xx_base = np.mgrid[:shape[0], :shape[1]]
 
     # center at 0, 0 and normalize
-    xx_base = (xx_base - (shape[1]-1)/2) / ((shape[1]-1)/2)
-    yy_base = (yy_base - (shape[0]-1)/2) / ((shape[0]-1)/2)
+    xx_base = (xx_base - (shape[1] - 1) / 2) / ((shape[1] - 1) / 2)
+    yy_base = (yy_base - (shape[0] - 1) / 2) / ((shape[0] - 1) / 2)
 
     # definition of ellipses as np.array:
     el_params = np.array([[0     ,0	      ,0.69	    ,0.92	,0	             ,1    ],
@@ -211,3 +211,4 @@ def shepp_logan_3d(shape):
         shepp_logan = shepp_logan + (ellipse_points <= 1) * value
 
     return shepp_logan
+
