@@ -72,9 +72,9 @@ def shepp_logan(shape):
     return np.flip(shepp_logan, axis=0)
 
 
-def shepp_logan_mod(shape):
+def shepp_logan_enhanced(shape):
     """
-        Creates a Modified (better contrast) Shepp Logan Phantom.
+        Creates a contrast enhanced Shepp Logan Phantom.
 
     Args:
         shape: Shape (in [Y, X]) of phantom to create.
@@ -92,7 +92,7 @@ def shepp_logan_mod(shape):
     xx_base = (xx_base - (shape[1] - 1) / 2) / ((shape[1] - 1) / 2)
     yy_base = (yy_base - (shape[0] - 1) / 2) / ((shape[0] - 1) / 2)
 
-    # definition of ellipses as np.array:
+    # definition of ellipses with enhanced contrast values as np.array:
     el_params = np.array([[0     ,0	      ,0.69	    ,0.92	,0	             ,1    ],
                           [0     ,-0.0184 ,0.6624	,0.874	,0	             ,-0.8 ],
                           [0.22  ,0	      ,0.11	    ,0.31	,np.radians(-18) ,-0.2 ],
@@ -146,9 +146,9 @@ def shepp_logan_3d(shape):
     zz_base, yy_base, xx_base = np.mgrid[:shape[0], :shape[1], :shape[2]]
 
     # center at 0, 0 and normalize
-    xx_base = (xx_base - (shape[2]-1)/2) / ((shape[2]-1)/2)
-    yy_base = (yy_base - (shape[1]-1)/2) / ((shape[1]-1)/2)
-    zz_base = (zz_base - (shape[0]-1)/2) / ((shape[0]-1)/2)
+    xx_base = (xx_base - (shape[2] - 1) / 2) / ((shape[2] - 1) / 2)
+    yy_base = (yy_base - (shape[1] - 1) / 2) / ((shape[1] - 1) / 2)
+    zz_base = (zz_base - (shape[0] - 1) / 2) / ((shape[0] - 1) / 2)
 
     # definition of ellipsoids as np.array:
     #                       delta_x, delta_y, delta_z,        a,       b,       c,            phi,  theta,  psi,     rho
@@ -166,14 +166,14 @@ def shepp_logan_3d(shape):
     # create ellipses and sum up
     for i in range(el_params.shape[0]):
         # get params:
-        x_pos = el_params[i][0]
-        y_pos = el_params[i][1]
-        z_pos = el_params[i][2]
-        a_el  = el_params[i][3]
-        b_el  = el_params[i][4]
-        c_el  = el_params[i][5]
-        phi   = el_params[i][6]
-        value = el_params[i][9]
+        x_pos  = el_params[i][0]
+        y_pos  = el_params[i][1]
+        z_pos  = el_params[i][2]
+        a_axis = el_params[i][3]
+        b_axis = el_params[i][4]
+        c_axis = el_params[i][5]
+        phi    = el_params[i][6]
+        value  = el_params[i][9]
 
         # move to pos
         xc = (xx_base - x_pos)
@@ -205,7 +205,7 @@ def shepp_logan_3d(shape):
         zz = xc * R[2, 0] + yc * R[2, 1] + zc * R[2, 2]
 
         # calc squared distance to pos
-        ellipse_points = (xx ** 2) / (a_el ** 2) + (yy ** 2) / (b_el ** 2) + (zz ** 2) / (c_el ** 2)
+        ellipse_points = (xx ** 2) / (a_axis ** 2) + (yy ** 2) / (b_axis ** 2) + (zz ** 2) / (c_axis ** 2)
 
         # sum up
         shepp_logan = shepp_logan + (ellipse_points <= 1) * value
