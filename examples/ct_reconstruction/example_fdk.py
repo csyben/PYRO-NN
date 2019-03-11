@@ -1,19 +1,17 @@
 import numpy as np
 import tensorflow as tf
 import math
-import lme_custom_ops
 
 # TODO: better imports
-from deep_ct_reconstruction.ct_reconstruction.helpers.misc import generate_sinogram
-from deep_ct_reconstruction.ct_reconstruction.layers.projection_3d import cone_projection3d
-from deep_ct_reconstruction.ct_reconstruction.layers.backprojection_3d import cone_backprojection3d
-from deep_ct_reconstruction.ct_reconstruction.geometry.geometry_cone_3d import GeometryCone3D
-from deep_ct_reconstruction.ct_reconstruction.helpers.phantoms import shepp_logan
-from deep_ct_reconstruction.ct_reconstruction.helpers.trajectories import circular_trajectory
-from deep_ct_reconstruction.ct_reconstruction.helpers.filters.filters import ram_lak_3D
-from deep_ct_reconstruction.ct_reconstruction.helpers.filters.filters import ramp_3D
+from pyronn.ct_reconstruction.helpers.misc import generate_sinogram
+from pyronn.ct_reconstruction.layers.projection_3d import cone_projection3d
+from pyronn.ct_reconstruction.layers.backprojection_3d import cone_backprojection3d
+from pyronn.ct_reconstruction.geometry.geometry_cone_3d import GeometryCone3D
+from pyronn.ct_reconstruction.helpers.phantoms import shepp_logan
+from pyronn.ct_reconstruction.helpers.trajectories import circular_trajectory
+from pyronn.ct_reconstruction.helpers.filters.filters import ram_lak_3D
 
-import deep_ct_reconstruction.ct_reconstruction.helpers.filters.weights as ct_weights
+import pyronn.ct_reconstruction.helpers.filters.weights as ct_weights
 
 import pyconrad as pyc
 pyc.setup_pyconrad()
@@ -106,19 +104,19 @@ def example_cone_3d():
     # ------------------ Declare Parameters ------------------
 
     # Volume Parameters:
-    volume_size = 256
+    volume_size = 257
     volume_shape = [volume_size, volume_size, volume_size]
-    v_spacing = 0.5
+    v_spacing = 0.25
     volume_spacing = [v_spacing,v_spacing,v_spacing]
 
     # Detector Parameters:
-    detector_shape = [500 , 500]
-    d_spacing = 0.5
+    detector_shape = [501 , 501]
+    d_spacing = 0.33
     detector_spacing = [d_spacing,d_spacing]
 
     # Trajectory Parameters:
     number_of_projections = 248
-    angular_range = math.radians(200) #200 * np.pi / 180
+    angular_range = np.pi+2*np.arctan(detector_shape[0] / 2 / 1200)
 
     source_detector_distance = 1200
     source_isocenter_distance = 750

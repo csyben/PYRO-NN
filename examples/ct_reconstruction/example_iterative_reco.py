@@ -2,11 +2,11 @@ import numpy as np
 import tensorflow as tf
 import argparse
 
-from deep_ct_reconstruction.ct_reconstruction.geometry.geometry_parallel_2d import GeometryParallel2D
-from deep_ct_reconstruction.ct_reconstruction.helpers.trajectories import circular_trajectory
-from deep_ct_reconstruction.ct_reconstruction.helpers.phantoms import shepp_logan
-from deep_ct_reconstruction.ct_reconstruction.helpers.misc import generate_sinogram
-from deep_ct_reconstruction.ct_reconstruction.layers import projection_2d
+from pyronn.ct_reconstruction.geometry.geometry_parallel_2d import GeometryParallel2D
+from pyronn.ct_reconstruction.helpers.trajectories import circular_trajectory
+from pyronn.ct_reconstruction.helpers.phantoms import shepp_logan
+from pyronn.ct_reconstruction.helpers.misc.generate_sinogram import generate_sinogram
+from pyronn.ct_reconstruction.layers import projection_2d
 #TODO: Remove PyConrad
 import pyconrad as pyc
 pyc.setup_pyconrad()
@@ -30,7 +30,7 @@ def iterative_reconstruction():
 
     # Trajectory Parameters:
     number_of_projections = 30
-    angular_range = np.radians(180)  # 200 * np.pi / 180
+    angular_range = np.radians(200)  # 200 * np.pi / 180
 
     # create Geometry class
     geometry = GeometryParallel2D(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_projections, angular_range)
@@ -43,7 +43,7 @@ def iterative_reconstruction():
     config.gpu_options.allow_growth = True
     # ------------------ Call Layers ------------------
     with tf.Session(config=config) as sess:
-        acquired_sinogram = generate_sinogram.generate_sinogram(phantom,projection_2d.parallel_projection2d,geometry)
+        acquired_sinogram = generate_sinogram(phantom,projection_2d.parallel_projection2d,geometry)
 
         acquired_sinogram = acquired_sinogram + np.random.normal(
             loc=np.mean(np.abs(acquired_sinogram)), scale=np.std(acquired_sinogram), size=acquired_sinogram.shape) * 0.02
@@ -124,7 +124,7 @@ class pipeline(object):
 
             _, loss, current_sino, current_reco, label = self.sess.run([self.train_op, self.loss, self.current_sino, self.current_reco, self.label_element])
 
-            if loss > min_loss * 1.0005:
+            if loss > min_loss * 1.005:
                 break
             if epoch % 50 is 0:
                 print('Epoch: %d' % epoch)

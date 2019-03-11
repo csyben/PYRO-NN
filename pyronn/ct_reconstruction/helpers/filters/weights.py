@@ -154,8 +154,8 @@ def riess_weights_2d(geometry):
 
 
 def testParker3d():
-    from deep_ct_reconstruction.ct_reconstruction.geometry.geometry_cone_3d import GeometryCone3D
-    from deep_ct_reconstruction.ct_reconstruction.helpers.trajectories import circular_trajectory
+    from pyronn.ct_reconstruction.geometry.geometry_cone_3d import GeometryCone3D
+    from pyronn.ct_reconstruction.helpers.trajectories import circular_trajectory
     import pyconrad as pyc
     pyc.setup_pyconrad()
     pyc.start_gui()
@@ -261,8 +261,8 @@ def parker_weights_conrad(geometry):
 
 
 def testParker2d():
-    from deep_ct_reconstruction.ct_reconstruction.geometry.geometry_fan_2d import GeometryFan2D
-    from deep_ct_reconstruction.ct_reconstruction.helpers.trajectories import circular_trajectory
+    from pyronn.ct_reconstruction.geometry.geometry_fan_2d import GeometryFan2D
+    from pyronn.ct_reconstruction.helpers.trajectories import circular_trajectory
 
     # Volume Parameters:
     volume_size = 512

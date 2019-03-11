@@ -1,7 +1,7 @@
 import tensorflow as tf
 from .geometry_parameters import GEOMETRY
-from deep_ct_reconstruction.ct_reconstruction.helpers.filters import filters
-from deep_ct_reconstruction.ct_reconstruction.layers.backprojection_2d import parallel_backprojection2d
+from pyronn.ct_reconstruction.helpers.filters import filters
+from pyronn.ct_reconstruction.layers.backprojection_2d import parallel_backprojection2d
 
 """
     Here the model in terms of Tensorflow layers is defined.

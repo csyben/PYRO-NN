@@ -1,6 +1,6 @@
 import numpy as np
-from deep_ct_reconstruction.ct_reconstruction.geometry.geometry_parallel_2d import GeometryParallel2D
-from deep_ct_reconstruction.ct_reconstruction.helpers.trajectories          import circular_trajectory
+from pyronn.ct_reconstruction.geometry.geometry_parallel_2d import GeometryParallel2D
+from pyronn.ct_reconstruction.helpers.trajectories          import circular_trajectory
 
 
 """
