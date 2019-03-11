@@ -1,5 +1,5 @@
 from tensorflow.python.framework import ops
-import lme_custom_ops
+import pyronn_layers
 
 
 # parallel_projection2d
@@ -12,7 +12,7 @@ def parallel_projection2d(volume, geometry):
     Returns:
             Initialized lme_custom_ops.parallel_projection2d layer.
     """
-    return lme_custom_ops.parallel_projection2d(volume,
+    return pyronn_layers.parallel_projection2d(volume,
                                                 volume_shape=geometry.volume_shape,
                                                 projection_shape=geometry.sinogram_shape,
                                                 volume_origin=geometry.tensor_proto_volume_origin,
@@ -27,7 +27,7 @@ def _project_grad(op, grad):
     '''
         Compute the gradient of the projection op by invoking the backprojector.
     '''
-    reco = lme_custom_ops.parallel_backprojection2d(
+    reco = pyronn_layers.parallel_backprojection2d(
         sinogram=grad,
         sinogram_shape=op.get_attr("projection_shape"),
         volume_shape=op.get_attr("volume_shape"),
@@ -50,7 +50,7 @@ def fan_projection2d(volume, geometry):
     Returns:
             Initialized lme_custom_ops.fan_projection2d layer.
     """
-    return lme_custom_ops.fan_projection2d(volume,
+    return pyronn_layers.fan_projection2d(volume,
                                            volume_shape=geometry.volume_shape,
                                            projection_shape=geometry.sinogram_shape,
                                            volume_origin=geometry.tensor_proto_volume_origin,
@@ -67,7 +67,7 @@ def _project_grad(op, grad):
     '''
         Compute the gradient of the projection op by invoking the backprojector.
     '''
-    reco = lme_custom_ops.fan_backprojection2d(
+    reco = pyronn_layers.fan_backprojection2d(
         sinogram=grad,
         sinogram_shape=op.get_attr("projection_shape"),
         volume_shape=op.get_attr("volume_shape"),

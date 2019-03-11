@@ -1,5 +1,5 @@
 from tensorflow.python.framework import ops
-import lme_custom_ops
+import pyronn_layers
 
 
 # cone_projection3d
@@ -15,7 +15,7 @@ def cone_projection3d(volume, geometry, hardware_interp=True, step_size=1.0):
             Initialized lme_custom_ops.cone_projection3d layer.
     """
 
-    return lme_custom_ops.cone_projection3d(volume,
+    return pyronn_layers.cone_projection3d(volume,
                                             volume_shape=geometry.volume_shape,
                                             projection_shape=geometry.sinogram_shape,
                                             volume_origin=geometry.tensor_proto_volume_origin,
@@ -30,7 +30,7 @@ def _project_grad(op, grad):
     '''
     Compute the gradient of the projection op by invoking the backprojector.
     '''
-    reco = lme_custom_ops.cone_backprojection3d(
+    reco = pyronn_layers.cone_backprojection3d(
         sinogram=grad,
         sinogram_shape=op.get_attr("projection_shape"),
         volume_shape=op.get_attr("volume_shape"),
