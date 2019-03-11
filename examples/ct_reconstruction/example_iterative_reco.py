@@ -2,11 +2,11 @@ import numpy as np
 import tensorflow as tf
 import argparse
 
-from deep_ct_reconstruction.ct_reconstruction.geometry.geometry_parallel_2d import GeometryParallel2D
-from deep_ct_reconstruction.ct_reconstruction.helpers.trajectories import circular_trajectory
-from deep_ct_reconstruction.ct_reconstruction.helpers.phantoms import shepp_logan
-from deep_ct_reconstruction.ct_reconstruction.helpers.misc.generate_sinogram import generate_sinogram
-from deep_ct_reconstruction.ct_reconstruction.layers import projection_2d
+from pyronn.ct_reconstruction.geometry.geometry_parallel_2d import GeometryParallel2D
+from pyronn.ct_reconstruction.helpers.trajectories import circular_trajectory
+from pyronn.ct_reconstruction.helpers.phantoms import shepp_logan
+from pyronn.ct_reconstruction.helpers.misc.generate_sinogram import generate_sinogram
+from pyronn.ct_reconstruction.layers import projection_2d
 #TODO: Remove PyConrad
 import pyconrad as pyc
 pyc.setup_pyconrad()

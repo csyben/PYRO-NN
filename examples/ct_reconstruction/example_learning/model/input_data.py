@@ -1,9 +1,9 @@
 import tensorflow as tf
 import numpy as np
 from .geometry_parameters import GEOMETRY
-from deep_ct_reconstruction.ct_reconstruction.helpers.phantoms import circle
-from deep_ct_reconstruction.ct_reconstruction.helpers.misc.generate_sinogram import generate_sinogram
-from deep_ct_reconstruction.ct_reconstruction.layers.projection_2d import parallel_projection2d
+from pyronn.ct_reconstruction.helpers.phantoms import circle
+from pyronn.ct_reconstruction.helpers.misc.generate_sinogram import generate_sinogram
+from pyronn.ct_reconstruction.layers.projection_2d import parallel_projection2d
 
 
 def generate_training_data(number_of_training_samples_generate):

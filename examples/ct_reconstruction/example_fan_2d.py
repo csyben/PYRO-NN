@@ -5,12 +5,12 @@ import pyconrad as pyc # TODO: get independent of pyconrad
 pyc.setup_pyconrad()
 
 # TODO: better imports
-from deep_ct_reconstruction.ct_reconstruction.layers.projection_2d import fan_projection2d
-from deep_ct_reconstruction.ct_reconstruction.layers.backprojection_2d import fan_backprojection2d
-from deep_ct_reconstruction.ct_reconstruction.geometry.geometry_fan_2d import GeometryFan2D
-from deep_ct_reconstruction.ct_reconstruction.helpers.phantoms import shepp_logan
-from deep_ct_reconstruction.ct_reconstruction.helpers.trajectories import circular_trajectory
-from deep_ct_reconstruction.ct_reconstruction.helpers.filters import filters
+from pyronn.ct_reconstruction.layers.projection_2d import fan_projection2d
+from pyronn.ct_reconstruction.layers.backprojection_2d import fan_backprojection2d
+from pyronn.ct_reconstruction.geometry.geometry_fan_2d import GeometryFan2D
+from pyronn.ct_reconstruction.helpers.phantoms import shepp_logan
+from pyronn.ct_reconstruction.helpers.trajectories import circular_trajectory
+from pyronn.ct_reconstruction.helpers.filters import filters
 
 
 def example_fan_2d():
@@ -19,11 +19,11 @@ def example_fan_2d():
     # Volume Parameters:
     volume_size = 512
     volume_shape = [volume_size, volume_size]
-    volume_spacing = [0.5, 0.5]
+    volume_spacing = [1, 1]
 
     # Detector Parameters:
     detector_shape = 800
-    detector_spacing = 0.5
+    detector_spacing = 1
 
     # Trajectory Parameters:
     number_of_projections = 360
@@ -37,7 +37,7 @@ def example_fan_2d():
     geometry.set_central_ray_vectors(circular_trajectory.circular_trajectory_2d(geometry))
 
     # Get Phantom
-    phantom = shepp_logan.shepp_logan(volume_shape)
+    phantom = shepp_logan.shepp_logan_mod(volume_shape)
     pyc.imshow(phantom, 'phantom')
 
 

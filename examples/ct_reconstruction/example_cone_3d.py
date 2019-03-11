@@ -5,12 +5,12 @@ import pyconrad as pyc # TODO: get independent of pyconrad
 pyc.setup_pyconrad()
 
 # TODO: better imports
-from deep_ct_reconstruction.ct_reconstruction.layers.projection_3d import cone_projection3d
-from deep_ct_reconstruction.ct_reconstruction.layers.backprojection_3d import cone_backprojection3d
-from deep_ct_reconstruction.ct_reconstruction.geometry.geometry_cone_3d import GeometryCone3D
-from deep_ct_reconstruction.ct_reconstruction.helpers.phantoms import shepp_logan
-from deep_ct_reconstruction.ct_reconstruction.helpers.trajectories import circular_trajectory
-from deep_ct_reconstruction.ct_reconstruction.helpers.filters.filters import ramp
+from pyronn.ct_reconstruction.layers.projection_3d import cone_projection3d
+from pyronn.ct_reconstruction.layers.backprojection_3d import cone_backprojection3d
+from pyronn.ct_reconstruction.geometry.geometry_cone_3d import GeometryCone3D
+from pyronn.ct_reconstruction.helpers.phantoms import shepp_logan
+from pyronn.ct_reconstruction.helpers.trajectories import circular_trajectory
+from pyronn.ct_reconstruction.helpers.filters.filters import ramp
 
 
 def example_cone_3d():
