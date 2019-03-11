@@ -1,9 +1,6 @@
 import numpy as np
-from math import pow, sqrt, cos, sin, pi
-import tensorflow as tf
+from math import pi
 
-
-# TODO: use my filter inits
 
 def ramp(detector_width):
     filter_array = np.zeros(detector_width)
