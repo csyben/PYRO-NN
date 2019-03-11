@@ -7,3 +7,5 @@ build/
 dist/
 *.egg-info/
 
+#ignore pip packge build stuff
+build_package.sh
