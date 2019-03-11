@@ -1,7 +1,6 @@
 import numpy as np
 import tensorflow as tf
 import math
-import lme_custom_ops
 
 # TODO: better imports
 from pyronn.ct_reconstruction.helpers.misc import generate_sinogram
@@ -11,7 +10,6 @@ from pyronn.ct_reconstruction.geometry.geometry_cone_3d import GeometryCone3D
 from pyronn.ct_reconstruction.helpers.phantoms import shepp_logan
 from pyronn.ct_reconstruction.helpers.trajectories import circular_trajectory
 from pyronn.ct_reconstruction.helpers.filters.filters import ram_lak_3D
-from pyronn.ct_reconstruction.helpers.filters.filters import ramp_3D
 
 import pyronn.ct_reconstruction.helpers.filters.weights as ct_weights
 
