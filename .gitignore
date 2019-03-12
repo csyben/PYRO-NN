@@ -1,5 +1,6 @@
 #ignore ide stuff
 .idea/
+.vscode/
 __pycache__/
 
 #ignore built stuff
