@@ -7,14 +7,15 @@ FRAMEWORK
 
 
 
-The python framework for the deeptomo layers implemented in (https://www.github.com/framework_impl/)
+The python framework for the PYRO-NN layers implemented in (https://github.com/csyben/PYRO-NN-Layers)
 
 PYRO-NN
 =========
 
 PYRO-NN brings state-of-the-art reconstruction algorithm to neural networks integrated into Tensorflow.
 
-To use pyronn you need to build the operators from sources or install the provided binaries from https://github.com/csyben/PYRO-NN-Layers
+To use pyronn you need to build the operators from sources or install the provided binaries from
+https://github.com/csyben/PYRO-NN-Layers
 
 The publication can be found under (https://frameworkpaper)
 
