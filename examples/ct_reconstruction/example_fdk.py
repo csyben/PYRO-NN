@@ -2,6 +2,9 @@ import numpy as np
 import tensorflow as tf
 import math
 
+import sys
+sys.path.append('/home/markus/FAU/Project/deep_ct_reconstruction_master')
+
 # TODO: better imports
 from pyronn.ct_reconstruction.helpers.misc import generate_sinogram
 from pyronn.ct_reconstruction.layers.projection_3d import cone_projection3d
@@ -81,7 +84,7 @@ class nn_model:
         primary_angles_2 = np.linspace(0, geometry.angular_range, geometry.number_of_projections)
 
         self.redundancy_weight = tf.get_variable(name='redundancy_weight', dtype=tf.float32,
-                                             initializer=ct_weights.init_parker_3D(self.geometry,primary_angles_2), trainable=False)
+                                             initializer=ct_weights.parker_weights_3d(self.geometry), trainable=False)
 
         self.filter = tf.get_variable(name='reco_filter', dtype=tf.float32, initializer=ram_lak_3D(self.geometry), trainable=False)
 
@@ -104,13 +107,13 @@ def example_cone_3d():
     # ------------------ Declare Parameters ------------------
 
     # Volume Parameters:
-    volume_size = 257
+    volume_size = 151
     volume_shape = [volume_size, volume_size, volume_size]
     v_spacing = 0.25
     volume_spacing = [v_spacing,v_spacing,v_spacing]
 
     # Detector Parameters:
-    detector_shape = [501 , 501]
+    detector_shape = [251 , 251]
     d_spacing = 0.33
     detector_spacing = [d_spacing,d_spacing]
 
@@ -123,7 +126,8 @@ def example_cone_3d():
 
     # create Geometry class
     geometry = GeometryCone3D(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_projections, angular_range, source_detector_distance, source_isocenter_distance)
-    projection_geometry =  circular_trajectory.circular_trajectory_3d(geometry)
+    geometry.angular_range = np.radians(200) #np.pi + 2*geometry.fan_angle
+    projection_geometry = circular_trajectory.circular_trajectory_3d(geometry)
 
     geometry.set_projection_matrices(projection_geometry)
     #geometry.set_projection_matrices(circular_trajectory.circular_trajectory_3d(geometry))
