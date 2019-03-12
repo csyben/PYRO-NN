@@ -60,3 +60,54 @@ def parker_weights_2d(geometry):
     scale_factor = (geometry.angular_range + geometry.angular_range  / geometry.number_of_projections) / np.pi
 
     return weights * scale_factor
+
+
+# Adapted from:
+# TV or not TV? That is the Question
+# Christian Riess, Martin Berger, Haibo Wu, Michael Manhart, Rebecca Fahrig and Andreas Maier
+# The 12th International Meeting on Fully Three-Dimensional Image Reconstruction in Radiology and Nuclear Medicine
+def riess_weights_2d(geometry):
+
+    delta_x = geometry.angular_range - np.pi # overscan
+
+    def eta(beta, gamma_angle):
+        return np.sin( (np.pi/2.0) * (np.pi+delta_x-beta) / (delta_x-2*gamma_angle) ) ** 2
+
+    def zeta(beta, gamma_angle):
+        return np.sin( (np.pi/2.0) * beta / (delta_x+2*gamma_angle) ) ** 2
+
+    weights = np.ones((geometry.number_of_projections, geometry.detector_shape[-1]))
+    angular_increment = geometry.angular_range / geometry.number_of_projections
+    beta = 0
+
+    for beta_idx in range(weights.shape[0]):
+        for gamma_idx in range(weights.shape[1]):
+                # calculate correct pos on detector and current angle
+                gamma_angle = gamma_idx * geometry.detector_spacing[-1] + geometry.detector_origin[-1]
+                gamma_angle = np.arctan(gamma_angle / geometry.source_detector_distance)
+
+                if np.pi + 2*gamma_angle <= beta and beta <= np.pi + delta_x:
+                    val = eta(beta, gamma_angle)
+                    if not np.isnan(val):
+                        weights[beta_idx, gamma_idx] = val
+
+                if np.pi + 2*(delta_x - gamma_angle) <= beta and beta <= np.pi + delta_x:
+                    val = 2 - eta(beta, gamma_angle)
+                    if not np.isnan(val):
+                        weights[beta_idx, gamma_idx] = val
+
+                if 0 <= beta and beta <= 2*gamma_angle + delta_x:
+                    val = zeta(beta, gamma_angle)
+                    if not np.isnan(val):
+                        weights[beta_idx, gamma_idx] = val
+
+                if 0 <= beta and beta <= -delta_x - 2*gamma_angle:
+                    val = 2 - zeta(beta, gamma_angle)
+                    if not np.isnan(val):
+                        weights[beta_idx, gamma_idx] = val
+
+        beta += angular_increment
+
+    # additional scaling factor
+    scale_factor = geometry.angular_range / np.pi
+    return weights * scale_factor
