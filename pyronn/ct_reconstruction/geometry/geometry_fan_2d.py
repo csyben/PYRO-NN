@@ -19,8 +19,7 @@ class GeometryFan2D(GeometryBase):
                          source_detector_distance, source_isocenter_distance)
 
         # defined by geometry so calculate for convenience use
-        self.fan_angle = np.arctan(
-            self.detector_shape[0] * self.detector_spacing[0] / 2.0 / self.source_detector_distance)
+        self.fan_angle = np.arctan(((self.detector_shape[0] - 1) / 2.0 * self.detector_spacing[0]) / self.source_detector_distance)
 
     def set_central_ray_vectors(self, central_ray_vectors):
         """
