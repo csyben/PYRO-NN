@@ -1,26 +1,14 @@
 import numpy as np
 import tensorflow as tf
-import pyconrad as pyc # TODO: get independent of pyconrad
-pyc.setup_pyconrad()
-import sys
-sys.path.append('/home/markus/FAU/Project/deep_ct_reconstruction_master')
-
-# TODO: better imports
-from pyronn.ct_reconstruction.layers.projection_2d import fan_projection2d
-from pyronn.ct_reconstruction.layers.backprojection_2d import fan_backprojection2d
-from pyronn.ct_reconstruction.geometry.geometry_fan_2d import GeometryFan2D
-from pyronn.ct_reconstruction.helpers.phantoms import shepp_logan
-from pyronn.ct_reconstruction.helpers.trajectories import circular_trajectory
-from pyronn.ct_reconstruction.helpers.filters import filters
-from pyronn.ct_reconstruction.helpers.filters import weights
+from pyronn.ct_reconstruction.geometry.geometry_fan_2d                 import GeometryFan2D
+from pyronn.ct_reconstruction.helpers.filters                          import filters, weights
+from pyronn.ct_reconstruction.helpers.phantoms.shepp_logan             import shepp_logan_enhanced
+from pyronn.ct_reconstruction.helpers.trajectories.circular_trajectory import circular_trajectory_2d
+from pyronn.ct_reconstruction.layers.backprojection_2d                 import fan_backprojection2d
+from pyronn.ct_reconstruction.layers.projection_2d                     import fan_projection2d
 
 
-
-
-
-def example_fan_2d():
-    # ------------------ Declare Parameters ------------------
-
+def example_fan_2d_shortscan():
     # Volume Parameters:
     volume_size = 256
     volume_shape = [volume_size, volume_size]
@@ -32,46 +20,44 @@ def example_fan_2d():
 
     # Trajectory Parameters:
     number_of_projections = 250
-    angular_range = None # will get set later to pi + 2 * fan_angle
+    angular_range = None # will get set to pi + 2 * fan_angle
 
     source_detector_distance = 1200
     source_isocenter_distance = 750
 
-    # create Geometry class
-    geometry = GeometryFan2D(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_projections, angular_range, source_detector_distance, source_isocenter_distance)
-    geometry.angular_range =  np.pi + 2*geometry.fan_angle
+    # Create Geometry class
+    geometry = GeometryFan2D(volume_shape, volume_spacing, 
+                             detector_shape, detector_spacing, 
+                             number_of_projections, angular_range, 
+                             source_detector_distance, source_isocenter_distance)
+    
+    geometry.angular_range =  np.pi + 2*geometry.fan_angle # fan_angle gets defined by sdd and detector_shape
+    geometry.central_ray_vectors = circular_trajectory_2d(geometry)
 
-    geometry.set_central_ray_vectors(circular_trajectory.circular_trajectory_2d(geometry))
+    # Create Phantom
+    phantom = shepp_logan_enhanced(volume_shape)
 
-    # Get Phantom
-    phantom = shepp_logan.shepp_logan_enhanced(volume_shape)
-    pyc.imshow(phantom, 'phantom')
-
-
-    # ------------------ Call Layers ------------------
+    # Build up Reconstruction Pipeline
     with tf.Session() as sess:
+
+        # Create Sinogram of Phantom
         result = fan_projection2d(phantom, geometry)
         sinogram = result.eval()
-        pyc.imshow(sinogram, 'sinogram')
 
-        # redundancy
+        # Redundancy Weighting: Create Weights Image and pointwise multiply
         redundancy_weights = weights.parker_weights_2d(geometry)
-        pyc.imshow(redundancy_weights, 'redundancy_weights')
+        sinogram_redun_weighted = sinogram * redundancy_weights
 
-        # weigh it
-        sinogram = sinogram * redundancy_weights
-        pyc.imshow(sinogram, 'sinogram_redundancy_weights')
+        # Filtering: Create 2D Filter and pointwise multiply
+        the_filter = filters.ram_lak_2D(geometry)
+        sino_fft = np.fft.fft(sinogram, axis=1)
+        sino_filtered_fft = np.multiply(sinogram_redun_weighted, the_filter)
+        sinogram_filtered = np.fft.ifft(sino_filtered_fft, axis=1)
 
-        # filter
-        reco_filter = filters.ram_lak_2D(geometry)
-        sino_freq = np.fft.fft(sinogram, axis=1)
-        sino_filtered_freq = np.multiply(sino_freq, reco_filter)
-        sinogram_filtered = np.fft.ifft(sino_filtered_freq, axis=1)
-
+        # Final Backprojection
         result_back_proj = fan_backprojection2d(sinogram_filtered, geometry)
         reco = result_back_proj.eval()
-        pyc.imshow(reco, 'reco')
 
 
 if __name__ == '__main__':
-    example_fan_2d()
+    example_fan_2d_shortscan()
