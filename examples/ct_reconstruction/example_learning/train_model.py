@@ -1,91 +1,142 @@
-import os.path
 import tensorflow as tf
-
-from examples.ct_reconstruction.example_learning.model import input_data
-from examples.ct_reconstruction.example_learning.model import model
+import os.path
 from examples.ct_reconstruction.example_learning.model.geometry_parameters import GEOMETRY
+from examples.ct_reconstruction.example_learning.model import model, input_data
 
 # training parameters
-LEARNING_RATE       = 0.0001
-BATCH_SIZE          = 50
-MAX_TRAIN_STEPS     = 800
-MAX_VALID_STEPS     = 200
-MAX_TEST_STEPS      = 200
-MAX_EPOCHS          = 15
+LEARNING_RATE          = 0.0001
+NUM_TRAINING_SAMPLES   = 100
+NUM_VALIDATION_SAMPLES = 50
+NUM_TEST_SAMPLES       = 1
+MAX_TRAIN_STEPS        = NUM_TRAINING_SAMPLES
+MAX_VALID_STEPS        = NUM_VALIDATION_SAMPLES
+MAX_TEST_STEPS         = NUM_TEST_SAMPLES
+MAX_EPOCHS             = 5
 
-def run_training():
-    
-    BASE_DIR    = os.path.abspath(os.path.dirname(__file__))
-    LOG_DIR     = os.path.join(BASE_DIR, 'logs/')
-    WEIGHTS_DIR = os.path.join(BASE_DIR, 'trained_models/')
+import pyconrad as pyc
+import time
+pyc.setup_pyconrad()
+pyc.start_gui()
 
-    # get training data
-    train_data_np, labels_np = input_data.generate_training_data(BATCH_SIZE)
 
-    with tf.Graph().as_default():
+class Pipeline:
 
+
+    def __init__(self):
+        self.model = model.Model()
+        self.BASE_DIR    = os.path.abspath(os.path.dirname(__file__))
+        self.LOG_DIR     = os.path.join(self.BASE_DIR, 'logs/')
+        self.WEIGHTS_DIR = os.path.join(self.BASE_DIR, 'trained_models/')
+
+
+    def build_graph(self):
         # placeholders for inputs
-        data_ph   = tf.placeholder(tf.float32, shape=train_data_np.shape)
-        labels_ph = tf.placeholder(tf.float32, shape=labels_np.shape)
+        self.batch_size_placeholder = tf.placeholder(tf.int64)
+        self.data_placeholder   = tf.placeholder(tf.float32, shape=(None,) + tuple(GEOMETRY.sinogram_shape))
+        self.labels_placeholder = tf.placeholder(tf.float32, shape=(None,) + tuple(GEOMETRY.volume_shape))
 
         # create tf dataset
-        train_dataset = tf.data.Dataset.from_tensor_slices((data_ph, labels_ph)).batch(BATCH_SIZE).repeat()
+        dataset = tf.data.Dataset.from_tensor_slices((self.data_placeholder, self.labels_placeholder)).batch(1).repeat()
 
-        # create a iterator of the correct shape and type
-        iter = tf.data.Iterator.from_structure(train_dataset.output_types, train_dataset.output_shapes)
-        images, labels = iter.get_next()
-
-        # create the initialisation operations
-        train_init_op = iter.make_initializer(train_dataset)
+        # create a iterator
+        self.iter = dataset.make_initializable_iterator()
+        self.images, self.labels = self.iter.get_next()
 
         # call Model
-        output   = model.forward(images)
-        loss     = model.loss(output, labels)
-        train_op = model.training_op(loss, LEARNING_RATE)
+        self.backprojection_layer = self.model.forward(self.images)
+        self.loss                 = self.model.l2_loss(self.backprojection_layer, self.labels)
+        self.train_op             = self.model.training_op(self.loss, LEARNING_RATE)
 
         # summary stuff
-        tf.summary.scalar('loss', loss)
-        writer  = tf.summary.FileWriter(LOG_DIR)
-        summary = tf.summary.merge_all()
-        saver = tf.train.Saver()
+        tf.summary.scalar('loss', self.loss)
+        self.writer  = tf.summary.FileWriter(self.LOG_DIR)
+        self.summary = tf.summary.merge_all()
+        self.saver = tf.train.Saver()
+
+    
+    def do_model_eval(self, sess, input, labels, batch_size):
+        # init with data
+        sess.run(self.iter.initializer, feed_dict={self.data_placeholder: input,
+                                                       self.labels_placeholder: labels,
+                                                       self.batch_size_placeholder: 1})
+        for i in range(batch_size):
+            reco, loss_value = sess.run ([self.backprojection_layer, self.loss])
+
+        return reco, loss_value
+
+
+    def run_training(self):
+        
+        # get data
+        train_data_numpy, train_labels_numpy = input_data.generate_training_data(NUM_TRAINING_SAMPLES, 0.05)
+        validation_data_numpy, validation_labels_numpy = input_data.generate_validation_data(NUM_VALIDATION_SAMPLES)
+        test_data_numpy, test_labels_numpy = input_data.get_test_data(NUM_TEST_SAMPLES)
 
         # session
-        init = tf.global_variables_initializer()
-        sess = tf.Session()
-        sess.run(init)
+        config = tf.ConfigProto()
+        config.gpu_options.per_process_gpu_memory_fraction = 0.5
+        config.gpu_options.allow_growth = True
+        with tf.Session(config=config) as sess:
 
-        # initialise iterator with train data
-        sess.run(train_init_op, feed_dict={data_ph: train_data_np, labels_ph: labels_np})
+            self.build_graph()
+            sess.run(tf.global_variables_initializer())
+            sess.run(tf.local_variables_initializer())
+            pyc.imshow(np.fft.fftshift(self.model.filter_weights.eval()), 'inital')
 
-        for epoch in range(MAX_EPOCHS):
+            for epoch in range(MAX_EPOCHS):
+                print('EPOCH: ', epoch)
+                # initialise iterator with train data
+                sess.run(self.iter.initializer, feed_dict={self.data_placeholder: train_data_numpy,
+                                                           self.labels_placeholder: train_labels_numpy,
+                                                           self.batch_size_placeholder: NUM_TRAINING_SAMPLES})
+                
+                for step in range(MAX_TRAIN_STEPS):
+                    # get next batch
+                    _, training_loss_value, train_reco = sess.run([self.train_op, self.loss, self.backprojection_layer])
 
-            print('EPOCH : ', epoch)
-            
-            for step in range(MAX_TRAIN_STEPS):
+                    #pyc.imshow(train_reco, 'current_train_reco')
+                    #time.sleep(1)
 
-                # get next batch
-                _, loss_value = sess.run([train_op, loss])
+                    # print loss
+                    if(step % 10 == 0):
+                        print('training_loss: ', training_loss_value)
+                        sum = sess.run(self.summary)
+                        self.writer.add_summary(sum, (epoch * MAX_TRAIN_STEPS) + step)
 
-                # print loss
-                if(step % 100 == 0):
-                    print('loss: ', loss_value)
-                    sum = sess.run(summary)
-                    writer.add_summary(sum, (epoch * MAX_TRAIN_STEPS) + step)
+                    # Save a checkpoint of the model after every epoch.
+                    if (step + 1) == MAX_TRAIN_STEPS:
+                        print('Saving current model state.')
+                        self.saver.save(sess, self.WEIGHTS_DIR, global_step=epoch * MAX_TRAIN_STEPS)
 
-                # Save a checkpoint of the model after every epoch.
-                if (step + 1) == MAX_TRAIN_STEPS:
-                    print('Saving current model state')
-                    saver.save(sess, WEIGHTS_DIR, global_step=epoch * MAX_TRAIN_STEPS)
+                # Every finished epoch validation
+                print('Evaluation on Validation data:')
+                sess.run(self.iter.initializer, feed_dict={self.data_placeholder: validation_data_numpy,
+                                                           self.labels_placeholder: validation_labels_numpy,
+                                                           self.batch_size_placeholder: 1})
+                for step in range(MAX_VALID_STEPS):
+                    validation_reco, validation_loss_value = sess.run([self.backprojection_layer, self.loss])
+                    #pyc.imshow(validation_reco, 'validation_reco')
+                    #time.sleep(1)
+                    print('validation_loss: ', validation_loss_value)
 
-            # Every finished epoch validation
-            #print('Evaluation on Validation data:')
-            # TODO: every finsihed epoch validation and image of current filter + reco
+            # Finished training, eval on test set
+            print('-----------------------------------------------')
+            print('Run trained model on test data: ')
+            sess.run(self.iter.initializer, feed_dict={self.data_placeholder: test_data_numpy,
+                                                           self.labels_placeholder: test_labels_numpy,
+                                                           self.batch_size_placeholder: 1})
+            for step in range(MAX_TEST_STEPS):
+                test_reco, test_loss_value = sess.run([self.backprojection_layer, self.loss])
+                pyc.imshow(test_reco, 'test_reco')
+                #time.sleep(1)
+                print('test_loss: ', test_loss_value)
+            import numpy as np
 
-        # TODO: testing at end of training
-        # Finished training, eval on test set
-        #print('-----------------------------------------------')
-        #print('Run trained model on test data: ')
+            pyc.imshow(np.fft.fftshift(self.model.filter_weights.eval()), 'learned')
+
 
             
 if __name__ == '__main__':
-    run_training()
+    p = Pipeline()
+    p.run_training()
+

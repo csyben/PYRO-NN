@@ -9,11 +9,11 @@ from pyronn.ct_reconstruction.helpers.trajectories          import circular_traj
 """
 
 # Declare Parameters
-volume_shape          = [200, 200]
+volume_shape          = [512, 512]
 volume_spacing        = [0.5, 0.5]
-detector_shape        = 300
+detector_shape        = 1024
 detector_spacing      = 0.5
-number_of_projections = 100
+number_of_projections = 256
 angular_range         = np.pi
 
 # Create Geometry class instance
