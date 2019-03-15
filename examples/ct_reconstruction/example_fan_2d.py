@@ -1,6 +1,5 @@
 import numpy as np
 import tensorflow as tf
-import lme_custom_ops
 import pyconrad as pyc # TODO: get independent of pyconrad
 pyc.setup_pyconrad()
 
@@ -11,15 +10,15 @@ from pyronn.ct_reconstruction.geometry.geometry_fan_2d import GeometryFan2D
 from pyronn.ct_reconstruction.helpers.phantoms import shepp_logan
 from pyronn.ct_reconstruction.helpers.trajectories import circular_trajectory
 from pyronn.ct_reconstruction.helpers.filters import filters
-
+from pyronn.ct_reconstruction.helpers.filters import weights
 
 def example_fan_2d():
     # ------------------ Declare Parameters ------------------
 
     # Volume Parameters:
-    volume_size = 512
+    volume_size = 256
     volume_shape = [volume_size, volume_size]
-    volume_spacing = [1, 1]
+    volume_spacing = [1,1]
 
     # Detector Parameters:
     detector_shape = 800
@@ -37,7 +36,7 @@ def example_fan_2d():
     geometry.set_central_ray_vectors(circular_trajectory.circular_trajectory_2d(geometry))
 
     # Get Phantom
-    phantom = shepp_logan.shepp_logan_mod(volume_shape)
+    phantom = shepp_logan.shepp_logan_enhanced(volume_shape)
     pyc.imshow(phantom, 'phantom')
 
 
@@ -47,7 +46,9 @@ def example_fan_2d():
         sinogram = result.eval()
         pyc.imshow(sinogram, 'sinogram')
 
-        reco_filter = filters.ram_lak_2D(geometry)
+
+
+        reco_filter = filters.ramp_2D(geometry)
 
         sino_freq = np.fft.fft(sinogram, axis=1)
         sino_filtered_freq = np.multiply(sino_freq, reco_filter)

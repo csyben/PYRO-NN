@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-import lme_custom_ops
+
 import pyconrad as pyc # TODO: get independent of pyconrad
 pyc.setup_pyconrad()
 
@@ -17,24 +17,24 @@ def example_parallel_2d():
     # ------------------ Declare Parameters ------------------
 
     # Volume Parameters:
-    volume_size = 512
+    volume_size = 256
     volume_shape = [volume_size, volume_size]
-    volume_spacing = [0.5, 0.5]
+    volume_spacing = [1, 1]
 
     # Detector Parameters:
-    detector_shape = 625
-    detector_spacing = 0.5
+    detector_shape = 800
+    detector_spacing = 1
 
     # Trajectory Parameters:
-    number_of_projections = 30
-    angular_range = np.pi
+    number_of_projections = 360
+    angular_range = 2* np.pi
 
     # create Geometry class
     geometry = GeometryParallel2D(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_projections, angular_range)
     geometry.set_ray_vectors(circular_trajectory.circular_trajectory_2d(geometry))
 
     # Get Phantom
-    phantom = shepp_logan.shepp_logan(volume_shape)
+    phantom = shepp_logan.shepp_logan_enhanced(volume_shape)
     pyc.imshow(phantom, 'phantom')
 
 
@@ -43,8 +43,8 @@ def example_parallel_2d():
         result = parallel_projection2d(phantom, geometry)
         sinogram = result.eval()
 
-        sinogram = sinogram + np.random.normal(
-            loc=np.mean(np.abs(sinogram)), scale=np.std(sinogram), size=sinogram.shape) * 0.02
+        #sinogram = sinogram + np.random.normal(
+        #    loc=np.mean(np.abs(sinogram)), scale=np.std(sinogram), size=sinogram.shape) * 0.02
 
         pyc.imshow(sinogram, 'sinogram')
 

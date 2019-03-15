@@ -1,6 +1,5 @@
 import numpy as np
 import tensorflow as tf
-import lme_custom_ops
 import pyconrad as pyc # TODO: get independent of pyconrad
 pyc.setup_pyconrad()
 
@@ -17,20 +16,20 @@ def example_cone_3d():
     # ------------------ Declare Parameters ------------------
 
     # Volume Parameters:
-    volume_size = 100
+    volume_size = 256
     volume_shape = [volume_size, volume_size, volume_size]
     volume_spacing = [0.5, 0.5, 0.5]
 
     # Detector Parameters:
     detector_shape = [2*volume_size, 2*volume_size]
-    detector_spacing = [0.5, 0.5]
+    detector_spacing = [1, 1]
 
     # Trajectory Parameters:
     number_of_projections = 360
     angular_range = 2 * np.pi
 
-    source_detector_distance = 200
-    source_isocenter_distance = 200
+    source_detector_distance = 1200
+    source_isocenter_distance = 750
 
     # create Geometry class
     geometry = GeometryCone3D(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_projections, angular_range, source_detector_distance, source_isocenter_distance)
@@ -40,9 +39,11 @@ def example_cone_3d():
     phantom = shepp_logan.shepp_logan_3d(volume_shape)
     pyc.imshow(phantom, 'phantom')
 
-
+    config = tf.ConfigProto()
+    config.gpu_options.per_process_gpu_memory_fraction = 0.5
+    config.gpu_options.allow_growth = True
     # ------------------ Call Layers ------------------
-    with tf.Session() as sess:
+    with tf.Session(config = config) as sess:
         result = cone_projection3d(phantom, geometry)
         sinogram = result.eval()
         pyc.imshow(sinogram, 'sinogram')
