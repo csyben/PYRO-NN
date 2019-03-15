@@ -10,9 +10,9 @@ def cosine_weights_3d(geometry):
     w = np.zeros((geometry.detector_shape[1], geometry.detector_shape[0]), dtype=np.float32)
 
     for v in range(0, geometry.detector_shape[0]):
-        dv = ((v + 0.5) * geometry.detector_spacing[0] - cv) ** 2
+        dv = (v * geometry.detector_spacing[0] + cv) ** 2
         for u in range(0, geometry.detector_shape[1]):
-            du = ((u + 0.5) * geometry.detector_spacing[1] - cu) ** 2
+            du = (u * geometry.detector_spacing[1] + cu) ** 2
             w[v, u] = geometry.source_detector_distance / np.sqrt(sd2 + dv + du)
 
     return np.flip(w)
@@ -66,6 +66,7 @@ def parker_weights_2d(geometry):
 # TV or not TV? That is the Question
 # Christian Riess, Martin Berger, Haibo Wu, Michael Manhart, Rebecca Fahrig and Andreas Maier
 # The 12th International Meeting on Fully Three-Dimensional Image Reconstruction in Radiology and Nuclear Medicine
+# Note: This is the unsmoothed version of the by Riess, et al proposed weights, which may lead to artefacts.
 def riess_weights_2d(geometry):
 
     delta_x = geometry.angular_range - np.pi # overscan
