@@ -1,10 +1,7 @@
 import numpy as np
 import tensorflow as tf
+import matplotlib.pyplot as plt
 
-import pyconrad as pyc # TODO: get independent of pyconrad
-pyc.setup_pyconrad()
-
-# TODO: better imports
 from pyronn.ct_reconstruction.layers.projection_2d import parallel_projection2d
 from pyronn.ct_reconstruction.layers.backprojection_2d import parallel_backprojection2d
 from pyronn.ct_reconstruction.geometry.geometry_parallel_2d import GeometryParallel2D
@@ -35,7 +32,6 @@ def example_parallel_2d():
 
     # Get Phantom
     phantom = shepp_logan.shepp_logan_enhanced(volume_shape)
-    pyc.imshow(phantom, 'phantom')
 
 
     # ------------------ Call Layers ------------------
@@ -46,8 +42,6 @@ def example_parallel_2d():
         #sinogram = sinogram + np.random.normal(
         #    loc=np.mean(np.abs(sinogram)), scale=np.std(sinogram), size=sinogram.shape) * 0.02
 
-        pyc.imshow(sinogram, 'sinogram')
-
         reco_filter = filters.ram_lak_2D(geometry)
 
         sino_freq = np.fft.fft(sinogram, axis=1)
@@ -56,7 +50,11 @@ def example_parallel_2d():
 
         result_back_proj = parallel_backprojection2d(sinogram_filtered, geometry)
         reco = result_back_proj.eval()
-        pyc.imshow(reco, 'reco')
+
+        plt.figure()
+        plt.imshow(reco, cmap=plt.get_cmap('gist_gray'))
+        plt.axis('off')
+        plt.savefig('2d_par_reco.png', dpi=150, transparent=False, bbox_inches='tight')
 
 
 if __name__ == '__main__':

@@ -1,9 +1,7 @@
 import numpy as np
 import tensorflow as tf
-import pyconrad as pyc # TODO: get independent of pyconrad
-pyc.setup_pyconrad()
+import matplotlib.pyplot as plt
 
-# TODO: better imports
 from pyronn.ct_reconstruction.layers.projection_3d import cone_projection3d
 from pyronn.ct_reconstruction.layers.backprojection_3d import cone_backprojection3d
 from pyronn.ct_reconstruction.geometry.geometry_cone_3d import GeometryCone3D
@@ -37,7 +35,7 @@ def example_cone_3d():
 
     # Get Phantom 3d
     phantom = shepp_logan.shepp_logan_3d(volume_shape)
-    pyc.imshow(phantom, 'phantom')
+
 
     config = tf.ConfigProto()
     config.gpu_options.per_process_gpu_memory_fraction = 0.5
@@ -46,8 +44,8 @@ def example_cone_3d():
     with tf.Session(config = config) as sess:
         result = cone_projection3d(phantom, geometry)
         sinogram = result.eval()
-        pyc.imshow(sinogram, 'sinogram')
 
+        #TODO: Use 3D ramp / ram_lak not 1D
         # filtering
         filter = ramp(int(geometry.detector_shape[1]))
         sino_freq = np.fft.fft(sinogram, axis=2)
@@ -60,7 +58,10 @@ def example_cone_3d():
 
         result_back_proj = cone_backprojection3d(filtered_sino, geometry)
         reco = result_back_proj.eval()
-        pyc.imshow(reco, 'reco')
+        plt.figure()
+        plt.imshow(reco[(int)(volume_shape[0]/2),:,:], cmap=plt.get_cmap('gist_gray'))
+        plt.axis('off')
+        plt.savefig('3d_cone_reco.png', dpi=150, transparent=False, bbox_inches='tight')
 
 
 if __name__ == '__main__':

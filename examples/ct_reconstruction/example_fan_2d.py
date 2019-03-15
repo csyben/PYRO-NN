@@ -1,7 +1,6 @@
 import numpy as np
 import tensorflow as tf
-import pyconrad as pyc # TODO: get independent of pyconrad
-pyc.setup_pyconrad()
+import matplotlib.pyplot as plt
 
 # TODO: better imports
 from pyronn.ct_reconstruction.layers.projection_2d import fan_projection2d
@@ -37,16 +36,14 @@ def example_fan_2d():
 
     # Get Phantom
     phantom = shepp_logan.shepp_logan_enhanced(volume_shape)
-    pyc.imshow(phantom, 'phantom')
-
 
     # ------------------ Call Layers ------------------
     with tf.Session() as sess:
         result = fan_projection2d(phantom, geometry)
         sinogram = result.eval()
-        pyc.imshow(sinogram, 'sinogram')
 
-
+        #TODO: Add Cosine weighting
+        #TODO: Add redundancy weighting for 360 degree
 
         reco_filter = filters.ramp_2D(geometry)
 
@@ -56,7 +53,10 @@ def example_fan_2d():
 
         result_back_proj = fan_backprojection2d(sinogram_filtered, geometry)
         reco = result_back_proj.eval()
-        pyc.imshow(reco, 'reco')
+        plt.figure()
+        plt.imshow(reco, cmap=plt.get_cmap('gist_gray'))
+        plt.axis('off')
+        plt.savefig('2d_fan_reco.png', dpi=150, transparent=False, bbox_inches='tight')
 
 
 if __name__ == '__main__':

@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+import matplotlib.pyplot as plt
 from pyronn.ct_reconstruction.geometry.geometry_fan_2d                 import GeometryFan2D
 from pyronn.ct_reconstruction.helpers.filters                          import filters, weights
 from pyronn.ct_reconstruction.helpers.phantoms.shepp_logan             import shepp_logan_enhanced
@@ -12,11 +13,11 @@ def example_fan_2d_shortscan():
     # Volume Parameters:
     volume_size = 256
     volume_shape = [volume_size, volume_size]
-    volume_spacing = [0.5, 0.5]
+    volume_spacing = [1,1]
 
     # Detector Parameters:
     detector_shape = 500
-    detector_spacing = 0.5
+    detector_spacing = 1
 
     # Trajectory Parameters:
     number_of_projections = 250
@@ -50,13 +51,18 @@ def example_fan_2d_shortscan():
 
         # Filtering: Create 2D Filter and pointwise multiply
         the_filter = filters.ram_lak_2D(geometry)
-        sino_fft = np.fft.fft(sinogram, axis=1)
-        sino_filtered_fft = np.multiply(sinogram_redun_weighted, the_filter)
+        sino_fft = np.fft.fft(sinogram_redun_weighted, axis=1)
+        sino_filtered_fft = np.multiply(sino_fft, the_filter)
         sinogram_filtered = np.fft.ifft(sino_filtered_fft, axis=1)
 
         # Final Backprojection
         result_back_proj = fan_backprojection2d(sinogram_filtered, geometry)
         reco = result_back_proj.eval()
+
+        plt.figure()
+        plt.imshow(reco, cmap=plt.get_cmap('gist_gray'))
+        plt.axis('off')
+        plt.savefig('2d_fan_short_scan_reco.png', dpi=150, transparent=False, bbox_inches='tight')
 
 
 if __name__ == '__main__':
