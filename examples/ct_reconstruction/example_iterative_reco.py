@@ -1,15 +1,14 @@
 import numpy as np
 import tensorflow as tf
 import argparse
+import matplotlib.pyplot as plt
 
 from pyronn.ct_reconstruction.geometry.geometry_parallel_2d import GeometryParallel2D
 from pyronn.ct_reconstruction.helpers.trajectories import circular_trajectory
 from pyronn.ct_reconstruction.helpers.phantoms import shepp_logan
 from pyronn.ct_reconstruction.helpers.misc.generate_sinogram import generate_sinogram
 from pyronn.ct_reconstruction.layers import projection_2d
-#TODO: Remove PyConrad
-import pyconrad as pyc
-pyc.setup_pyconrad()
+
 
 def iterative_reconstruction():
     # ------------------ Declare Parameters ------------------
@@ -52,7 +51,12 @@ def iterative_reconstruction():
 
         iter_pipeline = pipeline(sess, args, geometry)
         iter_pipeline.train(zero_vector,np.asarray(acquired_sinogram))
-        pyc.imshow(iter_pipeline.result, 'result reco')
+
+    plt.figure()
+    plt.imshow(iter_pipeline.result[0], cmap=plt.get_cmap('gist_gray'), vmin=0, vmax=0.4)
+    plt.axis('off')
+    plt.savefig('iter_tv_reco.png', dpi=150, transparent=False, bbox_inches='tight')
+
 
 ########
 
@@ -129,7 +133,6 @@ class pipeline(object):
             if epoch % 50 is 0:
                 print('Epoch: %d' % epoch)
                 print('Loss %f' % loss)
-                pyc.imshow(current_reco, 'Phantom: Current Reco')
             if min_loss > loss:
                 min_loss = loss
                 self.result = current_reco
@@ -148,70 +151,5 @@ class iterative_reco_model:
         return self.current_sino, self.reco
 
 
-
-
-
-def medphys_plot():
-    import matplotlib.pyplot as plt
-    import pyconrad as pyc
-    pyc.setup_pyconrad()
-    path = '/home/syben/Documents/medphys/'
-    _ = pyc.ClassGetter()
-    phantom = pyc.PyGrid.from_tiff(path+'phantom_2d.tif')
-    iter = pyc.PyGrid.from_tiff(path + 'ops_iter_reco.tif')
-    parallel = pyc.PyGrid.from_tiff(path + 'ops_parallel_reco.tif')
-
-    slice = 128
-    row = 256
-
-    phantom_central = np.array(phantom[0, :, :])
-    custom_ops_central = np.array(iter[0, :, :])
-    conrad_central = np.array(parallel[0, :, :])
-
-    gt = phantom_central[row,:]
-    p1 = custom_ops_central[row,:]
-    p2 = conrad_central[row,:]
-
-    fig = plt.figure(figsize=(40, 10))
-    number_of_collumns = 8
-    number_of_rows = 3
-    img_one = plt.subplot2grid((number_of_rows, number_of_collumns), (0, 0), colspan=2,rowspan=3)
-    img_two = plt.subplot2grid((number_of_rows, number_of_collumns), (0, 2), colspan=2, rowspan=3)
-
-    plot_one = plt.subplot2grid((number_of_rows, number_of_collumns), (0, 4), colspan=4, rowspan=3)  # , sharex=img_one)
-
-
-    img_width = np.shape(phantom_central)[0]
-    img_one.plot((0, img_width), (row, row), '--', linewidth=5)
-    img_two.plot((0, img_width), (row, row), '--', linewidth=5)
-
-    img_one.imshow(custom_ops_central, cmap=plt.get_cmap('gist_gray'), vmin=0, vmax=1)
-    img_one.axis('off')
-    img_one.set_title('Iterative NN Reconstruction', fontsize=40, y=1.05)
-
-    img_two.imshow(conrad_central, cmap=plt.get_cmap('gist_gray'), vmin=0, vmax=1)
-    img_two.axis('off')
-    img_two.set_title('FBP NN Reconstruction', fontsize=40, y=1.05)
-
-    plot_one.plot(np.arange(len(gt)), gt, color='#1f77b4')
-    plot_one.plot(np.arange(len(p1)), p1, color='lightgreen')
-    plot_one.plot(np.arange(len(p2)), p2, linestyle=':', color='red')
-
-    min_plt = 0
-    max_plt = 1.1
-
-    plot_one.set_ylim(plt.ylim((min_plt, max_plt)))
-    plot_one.legend(['Shepp-Logan Phantom', 'NN Reconstruction', 'FBP NN Reconstruction'], loc='upper center', prop={'size': 40})
-    #plt.savefig('evaluation/eval_img/' + experiment_img_name + '.png', dpi=150, transparent=False, bbox_inches='tight')
-    plt.gcf().tight_layout(h_pad=0, w_pad=0)
-
-    plt.savefig(path + 'iter_eval.png', dpi=150, transparent=False, bbox_inches='tight')
-
-    fig.show()
-
-    a = 5
-
-
 if __name__ == '__main__':
-    #medphys_plot()
     iterative_reconstruction()
