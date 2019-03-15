@@ -24,7 +24,7 @@ with open("README.rst", "r") as fh:
 
 setuptools.setup(
     name="pyronn",
-    version="0.0.1",
+    version="0.0.2",
     author="Christopher Syben",
     author_email="christopher.syben@fau.de",
     description="PYRO-NN is the high level Python API to the PYRO-NN-Layers known operators.",
