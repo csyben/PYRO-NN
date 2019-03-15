@@ -1,3 +1,6 @@
+## 0.0.2
+* [x]  Python package license update from MIT to GPLv3
+
 ## 0.0.1
 
 * [x]  Initial package setup:

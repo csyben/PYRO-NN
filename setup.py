@@ -1,7 +1,7 @@
 __author__ = "Christopher Syben <christopher.syben@fau.de>"
 __copyright__ = "Christopher Syben <christopher.syben@fau.de>"
 __license__ = """
-deeptomo, python framework for convenient use of the ct reconstructions algorithms provided within Tensorflow
+PYRO-NN, python framework for convenient use of the ct reconstructions algorithms provided within Tensorflow
 Copyright (C) 2019 Christopher Syben <christopher.syben@fau.de>
 
 This program is free software: you can redistribute it and/or modify
@@ -23,18 +23,18 @@ with open("README.rst", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="deep_ct_reconstruction",
-    version="0.0.1",
+    name="pyronn",
+    version="0.0.2",
     author="Christopher Syben",
     author_email="christopher.syben@fau.de",
-    description="grml-tk is the high level Python API to the deeptomo known operators.",
+    description="PYRO-NN is the high level Python API to the PYRO-NN-Layers known operators.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/grml-tk",
+    url="https://github.com/csyben/PYRO-NN",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
     ],
 )
