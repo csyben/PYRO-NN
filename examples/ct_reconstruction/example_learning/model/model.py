@@ -36,7 +36,7 @@ class Model:
         ifft_layer = tf.cast(tf.spectral.ifft(filter_layer), dtype=tf.float32)
 
         # Reconstruction Backprojection layer
-        self.backprojection_layer = parallel_backprojection2d(ifft_layer, GEOMETRY)
+        self.backprojection_layer = tf.nn.relu(parallel_backprojection2d(ifft_layer, GEOMETRY))
 
         return self.backprojection_layer
 
