@@ -25,8 +25,8 @@ class GeometryBase:
             detector_spacing:           The spacing between detector voxels in Y, X order.
             number_of_projections:      Number of equidistant projections.
             angular_range:              The covered angular range.
-            source_detector_distance:   ...
-            source_isocenter_distance:  ...
+            source_detector_distance:   The source to detector distance (sdd).
+            source_isocenter_distance:  The source to isocenter distance (sid).
         """
         self.np_dtype = np.float32  # datatype for np.arrays make sure everything will be float32
 
