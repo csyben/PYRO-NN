@@ -9,12 +9,12 @@ from pyronn.ct_reconstruction.helpers.trajectories          import circular_traj
 """
 
 # Declare Parameters
-volume_shape          = [512, 512]
+volume_shape          = [256, 256]
 volume_spacing        = [0.5, 0.5]
-detector_shape        = 1024
+detector_shape        = 365
 detector_spacing      = 0.5
-number_of_projections = 256
-angular_range         = np.pi
+number_of_projections = 720
+angular_range         = 2*np.pi
 
 # Create Geometry class instance
 GEOMETRY = GeometryParallel2D(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_projections, angular_range)

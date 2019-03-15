@@ -7,14 +7,14 @@ from pyronn.ct_reconstruction.helpers.filters.filters import ram_lak
 # training parameters
 LEARNING_RATE          = 1e-6
 BATCH_SIZE_TRAIN       = 1
-NUM_TRAINING_SAMPLES   = 10
+NUM_TRAINING_SAMPLES   = 128
 MAX_TRAIN_STEPS        = NUM_TRAINING_SAMPLES//BATCH_SIZE_TRAIN
-BATCH_SIZE_VALIDATION  = 10
-NUM_VALIDATION_SAMPLES = BATCH_SIZE_VALIDATION*10
+BATCH_SIZE_VALIDATION  = 1
+NUM_VALIDATION_SAMPLES = 10
 MAX_VALIDATION_STEPS   = NUM_VALIDATION_SAMPLES//BATCH_SIZE_VALIDATION
 NUM_TEST_SAMPLES       = 1
 MAX_TEST_STEPS         = NUM_TEST_SAMPLES
-MAX_EPOCHS             = 1000
+MAX_EPOCHS             = 100
 
 
 class Pipeline:
@@ -36,7 +36,7 @@ class Pipeline:
         self.labels_placeholder = tf.placeholder(tf.float32, shape=(None,) + tuple(GEOMETRY.volume_shape))
 
         # Create tf dataset from placholders
-        dataset = tf.data.Dataset.from_tensor_slices((self.data_placeholder, self.labels_placeholder))\
+        dataset = tf.data.Dataset.from_tensor_slices((self.data_placeholder, self.labels_placeholder)) \
             .batch(self.batch_size_placeholder).repeat()
 
         # Create a initializable dataset iterator
@@ -91,6 +91,7 @@ class Pipeline:
             # Save initial filter for results
             self.results["initial_filter"] = self.model.filter_weights.eval()
 
+            loss_epoch_before = 1e16
             for epoch in range(MAX_EPOCHS):
                 print("EPOCH: ", epoch)
                 # Initialise dataset iterator with train data
@@ -103,7 +104,7 @@ class Pipeline:
                     _, training_loss_value = sess.run([self.train_op, self.loss])
 
                     # Print loss all x steps
-                    if(step % 1 == 0):
+                    if(step % 50 == 0):
                         print("training_loss: ", training_loss_value/BATCH_SIZE_TRAIN) # training loss of batch
                         summary = sess.run(self.summary)
                         self.writer.add_summary(summary, (epoch * MAX_TRAIN_STEPS) + step)
@@ -112,6 +113,11 @@ class Pipeline:
                     if (step + 1) == MAX_TRAIN_STEPS:
                         print("Saving current model state.")
                         self.saver.save(sess, self.WEIGHTS_DIR, global_step=epoch * MAX_TRAIN_STEPS)
+
+                # early stopping if loss is increasing or staying the same after one epoch
+                if training_loss_value >= loss_epoch_before:
+                    break
+                loss_epoch_before = training_loss_value
 
                 # Every finished epoch do a validation
                 print("Evaluation on Validation data:")
@@ -128,7 +134,7 @@ class Pipeline:
             self.results["learned_filter"] = self.model.filter_weights.eval()
 
             # -----------------------------------------------
-            # Generate Cupping results with binary shepp logan
+            # Generate Cupping results with big circle
             cupping_data_numpy, cupping_labels_numpy = input_data.get_test_cupping_data()
 
             # Generate learned filter cupping results:

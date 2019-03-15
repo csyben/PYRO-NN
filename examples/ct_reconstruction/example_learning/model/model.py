@@ -13,7 +13,7 @@ class Model:
         pass
 
 
-    def forward(self, images_batch):
+    def forward(self, sinogram_batch):
         """
         Sets up the network architecture.
 
@@ -25,15 +25,16 @@ class Model:
         """
 
         # FFT layer
-        fft_layer = tf.spectral.fft(tf.cast(images_batch, dtype=tf.complex64))
+        fft_layer = tf.spectral.fft(tf.cast(sinogram_batch, dtype=tf.complex64))
 
         # Filtering as multiplication layer
         self.filter_weights = tf.Variable(initial_value=filters.ramp(GEOMETRY.detector_shape[0]), expected_shape=GEOMETRY.detector_shape[0]) # init as ramp filter
         #filter_weights = tf.Variable(initial_value=tf.random.uniform(GEOMETRY.detector_shape[0]), expected_shape=GEOMETRY.detector_shape[0]) # init as random
+
         filter_layer = tf.multiply(fft_layer, tf.cast(self.filter_weights, dtype=tf.complex64))
 
         # IFFT layer
-        ifft_layer = tf.cast(tf.spectral.ifft(filter_layer), dtype=tf.float32)
+        ifft_layer = tf.real(tf.spectral.ifft(filter_layer))
 
         # Reconstruction Backprojection layer
         self.backprojection_layer = tf.nn.relu(parallel_backprojection2d(ifft_layer, GEOMETRY))
@@ -42,7 +43,6 @@ class Model:
 
 
     def l2_loss(self, predictions, gt_labels):
-        # think about using tf.losses.mean_squared_error(...) here
         self.loss = tf.reduce_sum(tf.squared_difference(predictions, gt_labels))
         return self.loss
 

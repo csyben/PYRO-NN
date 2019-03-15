@@ -20,7 +20,7 @@ def generate_training_data(number_of_samples, num_noise_sample_percentage=0.0):
         for i in range(number_of_circles):
             pos    = GEOMETRY.volume_shape//2 # middle
             radius = int(growth_rate * (i+1))
-            value  = 1.0 # np.random.uniform(0.01, 1.0) here one could also try random values for each circle
+            value  = 1.0 #np.random.uniform(0.01, 1.0) # here one could also try random values for each circle
             labels[i] = primitives_2d.circle(GEOMETRY.volume_shape, pos, radius, value)
 
             # project it
@@ -83,9 +83,9 @@ def get_test_cupping_data():
     labels = np.empty((1,) + tuple(GEOMETRY.volume_shape))
 
     with tf.Session() as sess:
-         labels[0] = primitives_2d.ellipse(GEOMETRY.volume_shape,
-                                           GEOMETRY.volume_shape//2,
-                                           GEOMETRY.volume_shape//4 * np.array([2, 1]))
+         labels[0] = primitives_2d.circle(GEOMETRY.volume_shape,
+                                          GEOMETRY.volume_shape//2,
+                                          np.min(GEOMETRY.volume_shape//2))
          data[0] = generate_sinogram_parallel_2d(labels[0], GEOMETRY)
 
 
