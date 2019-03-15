@@ -30,7 +30,7 @@ def ellipse(shape, pos, half_axes, value=1.0, phi=0.0):
         pos:            Center (in [Y, X]) from upper left corner
         half_axes:      Half axes of the ellipse (in [b, a])
         value:          Value
-        phi:            Rotation Angle
+        phi:            Rotation Angle in radians
 
     Returns:
         np.array filled with ellipse
