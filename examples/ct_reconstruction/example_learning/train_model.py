@@ -1,28 +1,23 @@
-import numpy as np
 import tensorflow as tf
 import os.path
 from examples.ct_reconstruction.example_learning.model.geometry_parameters import GEOMETRY
-from examples.ct_reconstruction.example_learning.model import model, input_data
+from examples.ct_reconstruction.example_learning.model import model, input_data, evaluation
+from pyronn.ct_reconstruction.helpers.filters.filters import ram_lak
 
 # training parameters
-LEARNING_RATE          = 0.0001
-BATCH_SIZE_TRAIN       = 10
-NUM_TRAINING_SAMPLES   = BATCH_SIZE_TRAIN * 10
+LEARNING_RATE          = 1e-6
+BATCH_SIZE_TRAIN       = 1
+NUM_TRAINING_SAMPLES   = 10
 MAX_TRAIN_STEPS        = NUM_TRAINING_SAMPLES//BATCH_SIZE_TRAIN
 BATCH_SIZE_VALIDATION  = 10
 NUM_VALIDATION_SAMPLES = BATCH_SIZE_VALIDATION*10
 MAX_VALIDATION_STEPS   = NUM_VALIDATION_SAMPLES//BATCH_SIZE_VALIDATION
 NUM_TEST_SAMPLES       = 1
 MAX_TEST_STEPS         = NUM_TEST_SAMPLES
-MAX_EPOCHS             = 10
+MAX_EPOCHS             = 1000
 
 
 class Pipeline:
-
-
-    # Class as namespace for storing results
-    class Results:
-        pass
 
 
     def __init__(self):
@@ -30,28 +25,30 @@ class Pipeline:
         self.BASE_DIR    = os.path.abspath(os.path.dirname(__file__))
         self.LOG_DIR     = os.path.join(self.BASE_DIR, 'logs/')
         self.WEIGHTS_DIR = os.path.join(self.BASE_DIR, 'trained_models/')
+        self.results     = dict()
 
 
     def build_graph(self):
-        # placeholders for inputs
+
+        # Placeholders for data, label and batchsize input
         self.batch_size_placeholder = tf.placeholder(tf.int64)
         self.data_placeholder   = tf.placeholder(tf.float32, shape=(None,) + tuple(GEOMETRY.sinogram_shape))
         self.labels_placeholder = tf.placeholder(tf.float32, shape=(None,) + tuple(GEOMETRY.volume_shape))
 
-        # create tf dataset
+        # Create tf dataset from placholders
         dataset = tf.data.Dataset.from_tensor_slices((self.data_placeholder, self.labels_placeholder))\
             .batch(self.batch_size_placeholder).repeat()
 
-        # create a iterator
+        # Create a initializable dataset iterator
         self.iter = dataset.make_initializable_iterator()
         self.sinograms, self.labels = self.iter.get_next()
 
-        # call Model
+        # Call model
         self.backprojection_layer = self.model.forward(self.sinograms)
         self.loss                 = self.model.l2_loss(self.backprojection_layer, self.labels)
         self.train_op             = self.model.training_op(self.loss, LEARNING_RATE)
 
-        # summary stuff
+        # Summary stuff
         tf.summary.scalar('loss', self.loss)
         self.writer  = tf.summary.FileWriter(self.LOG_DIR)
         self.summary = tf.summary.merge_all()
@@ -60,11 +57,11 @@ class Pipeline:
     
     def do_model_eval(self, sess, input, labels, batch_size, steps):
 
-        # initialize iterator with data
+        # Initialize dataset iterator with data
         sess.run(self.iter.initializer, feed_dict={self.data_placeholder: input,
                                                        self.labels_placeholder: labels,
                                                        self.batch_size_placeholder: batch_size})
-        # run model and calc avg loss for set
+        # Run model and calculate avg loss for set
         avg_loss = 0
         for i in range(steps):
             reco, loss_value = sess.run ([self.backprojection_layer, self.loss])
@@ -75,12 +72,12 @@ class Pipeline:
 
     def run_training(self):
         
-        # get data
-        train_data_numpy, train_labels_numpy           = input_data.generate_training_data  (NUM_TRAINING_SAMPLES, 0.00)
+        # Create data
+        train_data_numpy, train_labels_numpy           = input_data.generate_training_data  (NUM_TRAINING_SAMPLES, 0)
         validation_data_numpy, validation_labels_numpy = input_data.generate_validation_data(NUM_VALIDATION_SAMPLES)
         test_data_numpy, test_labels_numpy             = input_data.get_test_data           (NUM_TEST_SAMPLES)
 
-        # session
+        # Session
         config = tf.ConfigProto()
         config.gpu_options.per_process_gpu_memory_fraction = 0.5
         config.gpu_options.allow_growth = True
@@ -92,52 +89,83 @@ class Pipeline:
             sess.run(tf.local_variables_initializer())
 
             # Save initial filter for results
-            self.Results.initial_filter = np.fft.fftshift(self.model.filter_weights.eval())
+            self.results["initial_filter"] = self.model.filter_weights.eval()
 
             for epoch in range(MAX_EPOCHS):
-                print('EPOCH: ', epoch)
-                # initialise iterator with train data
+                print("EPOCH: ", epoch)
+                # Initialise dataset iterator with train data
                 sess.run(self.iter.initializer, feed_dict={self.data_placeholder: train_data_numpy,
                                                            self.labels_placeholder: train_labels_numpy,
                                                            self.batch_size_placeholder: BATCH_SIZE_TRAIN})
                 
                 for step in range(MAX_TRAIN_STEPS):
-                    # get next batch
+                    # Run next batch
                     _, training_loss_value = sess.run([self.train_op, self.loss])
 
-                    # print loss after each batch
-                    if(step % BATCH_SIZE_TRAIN == 0):
-                        print('training_loss: ', training_loss_value)
-                        sum = sess.run(self.summary)
-                        self.writer.add_summary(sum, (epoch * MAX_TRAIN_STEPS) + step)
+                    # Print loss all x steps
+                    if(step % 1 == 0):
+                        print("training_loss: ", training_loss_value/BATCH_SIZE_TRAIN) # training loss of batch
+                        summary = sess.run(self.summary)
+                        self.writer.add_summary(summary, (epoch * MAX_TRAIN_STEPS) + step)
 
                     # Save a checkpoint of the model after every epoch.
                     if (step + 1) == MAX_TRAIN_STEPS:
-                        print('Saving current model state.')
+                        print("Saving current model state.")
                         self.saver.save(sess, self.WEIGHTS_DIR, global_step=epoch * MAX_TRAIN_STEPS)
 
-                # Every finished epoch validation
-                print('Evaluation on Validation data:')
+                # Every finished epoch do a validation
+                print("Evaluation on Validation data:")
                 _, _, avg_validation_loss_value = self.do_model_eval(sess, validation_data_numpy, validation_labels_numpy,
                                                                      BATCH_SIZE_VALIDATION, MAX_VALIDATION_STEPS)
-                print('avg_validation_loss: ', avg_validation_loss_value)
+                print("avg_validation_loss: ", avg_validation_loss_value)
 
             # Finished training, eval on test set
-            print('-----------------------------------------------')
-            print('Run trained model on test data: ')
-            self.Results.test_reco, self.Results.test_loss, _ = self.do_model_eval(sess, test_data_numpy, test_labels_numpy,
-                                                                                   NUM_TEST_SAMPLES, MAX_TEST_STEPS)
-            print('test_loss: ', self.Results.test_loss)
-            self.Results.learned_filter = np.fft.fftshift(self.model.filter_weights.eval())
+            print("-----------------------------------------------")
+            print("Run trained model on test data: ")
+            self.results["learned_filter_reco_test_data"], self.results["learned_filter_reco_loss_test_data"], _ = \
+                self.do_model_eval(sess, test_data_numpy, test_labels_numpy, NUM_TEST_SAMPLES, MAX_TEST_STEPS)
+            print("test_loss: ", self.results["learned_filter_reco_loss_test_data"])
+            self.results["learned_filter"] = self.model.filter_weights.eval()
+
+            # -----------------------------------------------
+            # Generate Cupping results with binary shepp logan
+            cupping_data_numpy, cupping_labels_numpy = input_data.get_test_cupping_data()
+
+            # Generate learned filter cupping results:
+            self.results["learned_filter_reco"], self.results["learned_filter_reco_loss"], _ = \
+                self.do_model_eval(sess, cupping_data_numpy, cupping_labels_numpy, 1, 1)
+
+            # Generate Ramp filter cupping results: set the filter weights to ramp and run graph
+            self.model.filter_weights.load(self.results["initial_filter"], sess)
+            self.results["ramp_reco"], self.results["ramp_reco_loss"], _ = \
+                self.do_model_eval(sess, cupping_data_numpy, cupping_labels_numpy, 1, 1)
+
+            # Generate Ram_Lak cupping filter results
+            self.model.filter_weights.load(ram_lak(GEOMETRY.detector_shape[-1], GEOMETRY.detector_spacing[-1]), sess)
+            self.results["ram_lak_reco"], self.results["ram_lak_reco_loss"], _ = \
+                self.do_model_eval(sess, cupping_data_numpy, cupping_labels_numpy, 1, 1)
 
 
 def plot_results(results):
-    pass
+
+    file_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'plots/')
+
+    # Result filters:
+    ramp_filter    = results["initial_filter"]
+    ram_lak_filter = ram_lak(GEOMETRY.detector_shape[-1], GEOMETRY.detector_spacing[-1]) / 4 # divide for correct plot scaling
+    learned_filter = results["learned_filter"]
+
+    evaluation.evaluation_filter(ramp_filter, ram_lak_filter, learned_filter, os.path.join(file_path, "filter.png"))
+
+    # Result recos:
+    ramp_reco           = results["ramp_reco"]
+    ram_lak_reco        = results["ram_lak_reco"] / 4 # divide for correct plot scaling
+    learned_filter_reco = results["learned_filter_reco"]
+
+    evaluation.evaluation_three(ramp_reco, ram_lak_reco, learned_filter_reco, GEOMETRY.volume_shape, os.path.join(file_path, "cupping.png"))
 
             
-if __name__ == '__main__':
-    p = Pipeline()
-    p.run_training()
-    plot_results(p.Results)
-
-
+if __name__ == "__main__":
+    the_pipeline = Pipeline()
+    the_pipeline.run_training()
+    plot_results(the_pipeline.results)

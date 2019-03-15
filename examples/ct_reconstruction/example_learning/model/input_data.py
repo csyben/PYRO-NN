@@ -5,11 +5,11 @@ from pyronn.ct_reconstruction.helpers.phantoms import primitives_2d, shepp_logan
 from pyronn.ct_reconstruction.helpers.misc.generate_sinogram import generate_sinogram_parallel_2d
 
 
-def generate_training_data(number_of_samples, num_noise_sample_percentage=0.1):
+def generate_training_data(number_of_samples, num_noise_sample_percentage=0.0):
 
     number_of_noise_samples = int(number_of_samples * num_noise_sample_percentage)
     number_of_circles = number_of_samples - number_of_noise_samples
-    growth_rate = (np.min(GEOMETRY.volume_shape) - 5) / number_of_circles
+    growth_rate = np.min(GEOMETRY.volume_shape) / number_of_circles / 2
 
     data   = np.empty((number_of_samples,) + tuple(GEOMETRY.sinogram_shape))
     labels = np.empty((number_of_samples,) + tuple(GEOMETRY.volume_shape))
@@ -17,9 +17,9 @@ def generate_training_data(number_of_samples, num_noise_sample_percentage=0.1):
     with tf.Session() as sess:
 
         # build growing circles until volume is filled
-        for i in range(number_of_samples-number_of_noise_samples):
+        for i in range(number_of_circles):
             pos    = GEOMETRY.volume_shape//2 # middle
-            radius = int(5 + growth_rate * i)
+            radius = int(growth_rate * (i+1))
             value  = 1.0 # np.random.uniform(0.01, 1.0) here one could also try random values for each circle
             labels[i] = primitives_2d.circle(GEOMETRY.volume_shape, pos, radius, value)
 
@@ -36,7 +36,7 @@ def generate_training_data(number_of_samples, num_noise_sample_percentage=0.1):
 
 def generate_validation_data(number_of_samples):
 
-    growth_rate = np.array((GEOMETRY.volume_shape - 5) / number_of_samples, dtype=np.int32)
+    growth_rate = np.min(GEOMETRY.volume_shape) / number_of_samples / 2
 
     data   = np.empty((number_of_samples,) + tuple(GEOMETRY.sinogram_shape))
     labels = np.empty((number_of_samples,) + tuple(GEOMETRY.volume_shape))
@@ -45,7 +45,7 @@ def generate_validation_data(number_of_samples):
 
         # build growing rectangles
         for i in range(number_of_samples):
-            size   = np.array([5, 5]) + growth_rate * i
+            size   = np.array([growth_rate * (i+1), growth_rate * (i+1)], dtype=np.int32)
             pos    = GEOMETRY.volume_shape//2 - size//2 # middle
             value  = np.random.uniform(0.01, 1.0)
             labels[i] = primitives_2d.rect(GEOMETRY.volume_shape, pos, size, value)
@@ -76,3 +76,17 @@ def get_test_data(number_of_samples=1):
 
     return data, labels
 
+
+def get_test_cupping_data():
+
+    data = np.empty((1,) + tuple(GEOMETRY.sinogram_shape))
+    labels = np.empty((1,) + tuple(GEOMETRY.volume_shape))
+
+    with tf.Session() as sess:
+         labels[0] = primitives_2d.ellipse(GEOMETRY.volume_shape,
+                                           GEOMETRY.volume_shape//2,
+                                           GEOMETRY.volume_shape//4 * np.array([2, 1]))
+         data[0] = generate_sinogram_parallel_2d(labels[0], GEOMETRY)
+
+
+    return data, labels
