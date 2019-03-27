@@ -43,9 +43,79 @@ Changelog
 Can be found `CHANGELOG.md <https://github.com/csyben/PYRO-NN/blob/master/CHANGELOG.md>`_.
 
 Usage
-=====
-You can start with PYRO-NN
+======
+PYRO-NN comes with all relevant helper classes to easily run the projection and back-projection operators within the Tensorflow context.
 
+To use the Layers a geometry object is needed:
+
+.. code-block:: python
+
+    from pyronn.ct_reconstruction.geometry.geometry_parallel_2d import GeometryParallel2D
+
+
+    volume_size = 256
+    volume_shape = [volume_size, volume_size]
+    volume_spacing = [1, 1]
+
+    # Detector Parameters:
+    detector_shape = 512
+    detector_spacing = 1
+
+    # Trajectory Parameters:
+    number_of_par_projections = 360
+    angular_range = 2 * np.pi
+
+    # create Geometry class
+    par_geometry = GeometryParallel(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_fan_projections, angular_range)
+
+After defining the basic geometry parameters, a trajectory need to be set. The circular_trajectory class computes an idealiyed
+circular trajectory for a given geometry. For 2D parallel- and fan-beam geometry a trajectory is described using the central ray vectors.
+For 3D cone-beam geometry the trajectory is described with projection matrices.
+
+The trajectory can be calculated and set as follows:
+
+.. code-block:: python
+
+    from pyronn.ct_reconstruction.helpers.trajectories import circular_trajectory
+
+    par_geometry.set_central_ray_vectors(circular_trajectory.circular_trajectory_2d(par_geometry))
+
+At this point the geometry is fully setup and can be used to create projections and reconstructions.
+The Layers just takes the respective input tensor and the geometry object to conduct the projection, reconstruction respectively.
+PYRO-NN also provides convinient general way to create sinograms and reconstructions. The generate methods are generalized
+and take the input data, the layer to be used and the geometry. The only restiction is that the generation methods are within
+the Tensorflow session scope:
+
+.. code-block:: python
+
+    from pyronn.ct_reconstruction.layers.projection_2d import parallel_projection2d
+    from pyronn.ct_reconstruction.layers.backprojection_2d import parallel_backprojection2d
+    from pyronn.ct_reconstruction.helpers.misc import generate_sinogram as sino_helper
+    from pyronn.ct_reconstruction.helpers.misc import generate_reco as reco_helper
+    from pyronn.ct_reconstruction.helpers.phantoms import shepp_logan
+
+    phantom = shepp_logan.shepp_logan_enhanced(par_geometry.volume_shape)
+
+    with tf.Session as sess:
+        sinogram = sino_helper.generate_sinogram(phantom, parallel_projection2d, par_geometry)
+        reconstruction = reco_helper.generate_reco(sinogram, parallel_backprojection2d, par_geometry)
+
+In the following the example using the Layers directly is shown (Note that the Layers are within the Tensorflow graph context
+and therefore need to be evaluated before the result can be accessed):
+
+.. code-block:: python
+
+    from pyronn.ct_reconstruction.layers.projection_2d import parallel_projection2d
+    from pyronn.ct_reconstruction.helpers.phantoms import shepp_logan
+
+    phantom = shepp_logan.shepp_logan_enhanced(par_geometry.volume_shape)
+
+    with tf.Session as sess:
+        result = parallel_projection2d(phantom, geometry)
+        sinogram = result.eval()
+
+Using the PYRO-NN Layers directly registers the respective gradient, thus they can be used as normal Tensorflow Layers within the graph.
+For more details checkout the examples which are covering the different geometry and application cases.
 
 Potential Challenges
 ====================
