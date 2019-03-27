@@ -111,7 +111,7 @@ and therefore need to be evaluated before the result can be accessed):
     phantom = shepp_logan.shepp_logan_enhanced(par_geometry.volume_shape)
 
     with tf.Session as sess:
-        result = parallel_projection2d(phantom, geometry)
+        result = parallel_projection2d(phantom, par_geometry)
         sinogram = result.eval()
 
 Using the PYRO-NN Layers directly registers the respective gradient, thus they can be used as normal Tensorflow Layers within the graph.
