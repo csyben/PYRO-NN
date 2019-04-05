@@ -24,6 +24,7 @@ class GeometryCone3D(GeometryBase):
 
         # Containing the constant part of the distance weight and discretization invariant
         self.projection_multiplier = self.source_isocenter_distance * self.source_detector_distance * detector_spacing[-1] * np.pi / self.number_of_projections
+        self.step_size = 1.0
 
     def set_projection_matrices(self, projection_matrices):
         """
