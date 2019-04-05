@@ -22,7 +22,8 @@ def cone_projection3d(volume, geometry, hardware_interp=True, step_size=1.0):
                                             volume_spacing=geometry.tensor_proto_volume_spacing,
                                             projection_matrices=geometry.tensor_proto_projection_matrices,
                                             hardware_interp=hardware_interp,
-                                            step_size=step_size)
+                                            step_size=step_size,
+                                            projection_multiplier = geometry.projection_multiplier)
 
 
 @ops.RegisterGradient("ConeProjection3D")
@@ -39,5 +40,6 @@ def _project_grad(op, grad):
         projection_multiplier=op.get_attr("projection_multiplier"),
         projection_matrices=op.get_attr("projection_matrices"),
         hardware_interp=op.get_attr("hardware_interp"),
+        step_size=op.get_attr("step_size")
     )
     return [reco]
