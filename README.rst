@@ -83,7 +83,7 @@ The trajectory can be calculated and set as follows:
 At this point the geometry is fully setup and can be used to create projections and reconstructions.
 The Layers just takes the respective input tensor and the geometry object to conduct the projection, reconstruction respectively.
 PYRO-NN also provides convinient general way to create sinograms and reconstructions. The generate methods are generalized
-and take the input data, the layer to be used and the geometry. The only restiction is that the generation methods are within
+and take the input data, the layer to be used and the geometry. The only restriction is that the generation methods are within
 the Tensorflow session scope:
 
 .. code-block:: python
