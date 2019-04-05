@@ -1,3 +1,6 @@
+## 0.0.4
+* [x] Critical Bugfix: 3D Layers missing attributes for Gradient registration !
+
 ## 0.0.2
 * [x]  Python package license update from MIT to GPLv3
 
