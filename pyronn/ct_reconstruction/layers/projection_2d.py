@@ -75,7 +75,7 @@ def _project_grad(op, grad):
         detector_origin=op.get_attr("detector_origin"),
         volume_spacing=op.get_attr("volume_spacing"),
         detector_spacing=op.get_attr("detector_spacing"),
-        source_2_iso_distance=op.get_attr("source_2_iso_distance"),
+        source_2_isocenter_distance=op.get_attr("source_2_isocenter_distance"),
         source_2_detector_distance=op.get_attr("source_2_detector_distance"),
         central_ray_vectors=op.get_attr("central_ray_vectors"),
     )
