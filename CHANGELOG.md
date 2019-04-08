@@ -1,3 +1,6 @@
+## 0.0.5
+* [x]  Fanbeam layer attributes renamed in PYRO-NN-Layers. Adjustments in the layer files accordingly 
+
 ## 0.0.4
 * [x] Critical Bugfix: 3D Layers missing attributes for Gradient registration !
 
