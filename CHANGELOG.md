@@ -1,3 +1,6 @@
+## 0.0.6
+* [x]  Python package final license Apache 2.0
+
 ## 0.0.5
 * [x]  Fanbeam layer attributes renamed in PYRO-NN-Layers. Adjustments in the layer files accordingly 
 
