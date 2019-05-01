@@ -17,7 +17,7 @@ PYRO-NN brings state-of-the-art reconstruction algorithm to neural networks inte
 To use pyronn you need to build the operators from sources or install the provided binaries from
 https://github.com/csyben/PYRO-NN-Layers
 
-The publication can be found under (pre-print coming soon)
+The arXiv preprint can be found under https://arxiv.org/abs/1904.13342
 
 Installation
 ============
