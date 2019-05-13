@@ -17,37 +17,11 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import pyronn_layers
 
-from pyronn.ct_reconstruction.geometry.geometry_base import GeometryBase
+from pyronn.ct_reconstruction.geometry.geometry_parallel_3d import GeometryParallel3D
 from pyronn.ct_reconstruction.helpers.filters import filters
 from pyronn.ct_reconstruction.helpers.phantoms import shepp_logan
-
-class GeometryParallel3D(GeometryBase):
-    """
-        2D Parallel specialization of Geometry.
-    """
-
-    def __init__(self,
-                 volume_shape, volume_spacing,
-                 detector_shape, detector_spacing,
-                 number_of_projections, angular_range):
-        # init base selfmetry class with 2 dimensional members:
-        super().__init__(volume_shape, volume_spacing,
-                         detector_shape, detector_spacing,
-                         number_of_projections, angular_range,
-                         None, None)
-
-    def set_ray_vectors(self, ray_vectors):
-        """
-            Sets the member ray_vectors.
-        Args:
-            ray_vectors: np.array defining the trajectory ray_vectors.
-        """
-        self.ray_vectors = np.array(ray_vectors, self.np_dtype)
-
-    @GeometryBase.SetTensorProtoProperty
-    def ray_vectors(self, value):
-        self.__dict__['ray_vectors'] = value
-        self.tensor_proto_ray_vectors = super().to_tensor_proto(self.ray_vectors)
+from pyronn.ct_reconstruction.layers.projection_3d import par_projection3d
+from pyronn.ct_reconstruction.layers.backprojection_3d import par_backprojection3d
 
 
 def circular_trajectory_3d(geometry):
@@ -78,8 +52,8 @@ def example_parallel_3d():
     detector_spacing = [1,1]
 
     # Trajectory Parameters:
-    number_of_projections = 360
-    angular_range = 2*np.pi
+    number_of_projections = 180
+    angular_range = 1*np.pi
 
     # create Geometry class
     geometry = GeometryParallel3D(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_projections, angular_range)
@@ -93,14 +67,7 @@ def example_parallel_3d():
     with tf.Session() as sess:
         #result = parallel_projection3d(phantom, geometry)
 
-        result = pyronn_layers.parallel_projection3d(phantom,
-                                            volume_shape=geometry.volume_shape,
-                                            projection_shape=geometry.sinogram_shape,
-                                            volume_origin=geometry.tensor_proto_volume_origin,
-                                            detector_origin=geometry.tensor_proto_detector_origin,
-                                            volume_spacing=geometry.tensor_proto_volume_spacing,
-                                            detector_spacing=geometry.tensor_proto_detector_spacing,
-                                            ray_vectors=geometry.tensor_proto_ray_vectors)
+        result = par_projection3d(phantom,geometry)
 
         sinogram = result.eval()
 
@@ -116,14 +83,7 @@ def example_parallel_3d():
         sino_filtered_freq = np.multiply(sino_freq,reco_filter)
         sinogram_filtered = np.fft.ifft(sino_filtered_freq, axis=2)
 
-        result_back_proj = pyronn_layers.parallel_backprojection3d(sinogram_filtered,
-                                                    sinogram_shape=geometry.sinogram_shape,
-                                                    volume_shape=geometry.volume_shape,
-                                                    volume_origin=geometry.tensor_proto_volume_origin,
-                                                    detector_origin=geometry.tensor_proto_detector_origin,
-                                                    volume_spacing=geometry.tensor_proto_volume_spacing,
-                                                    detector_spacing=geometry.tensor_proto_detector_spacing,
-                                                    ray_vectors=geometry.tensor_proto_ray_vectors)
+        result_back_proj = par_backprojection3d(sinogram_filtered,geometry)
         reco = result_back_proj.eval()
         import pyconrad as pyc
         pyc.setup_pyconrad()
