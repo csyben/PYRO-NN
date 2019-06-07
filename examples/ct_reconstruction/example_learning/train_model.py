@@ -14,8 +14,8 @@
 
 import tensorflow as tf
 import os.path
-from examples.ct_reconstruction.example_learning.model.geometry_parameters import GEOMETRY
-from examples.ct_reconstruction.example_learning.model import model, input_data, evaluation
+from model.geometry_parameters import GEOMETRY
+from model import model, input_data, evaluation
 from pyronn.ct_reconstruction.helpers.filters.filters import ram_lak
 
 # training parameters
@@ -169,6 +169,7 @@ class Pipeline:
 def plot_results(results):
 
     file_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'plots/')
+    if not os.path.exists(file_path): os.mkdir(file_path)
 
     # Result filters:
     ramp_filter    = results["initial_filter"]
