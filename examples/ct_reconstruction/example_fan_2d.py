@@ -50,7 +50,7 @@ def example_fan_2d():
 
     # Get Phantom
     phantom = shepp_logan.shepp_logan_enhanced(volume_shape)
-
+    phantom = np.expand_dims(phantom,axis=0)
     # ------------------ Call Layers ------------------
     with tf.Session() as sess:
         result = fan_projection2d(phantom, geometry)
@@ -61,14 +61,14 @@ def example_fan_2d():
 
         reco_filter = filters.ramp_2D(geometry)
 
-        sino_freq = np.fft.fft(sinogram, axis=1)
+        sino_freq = np.fft.fft(sinogram, axis=-1)
         sino_filtered_freq = np.multiply(sino_freq, reco_filter)
-        sinogram_filtered = np.fft.ifft(sino_filtered_freq, axis=1)
+        sinogram_filtered = np.fft.ifft(sino_filtered_freq, axis=-1)
 
         result_back_proj = fan_backprojection2d(sinogram_filtered, geometry)
         reco = result_back_proj.eval()
         plt.figure()
-        plt.imshow(reco, cmap=plt.get_cmap('gist_gray'))
+        plt.imshow(np.squeeze(reco), cmap=plt.get_cmap('gist_gray'))
         plt.axis('off')
         plt.savefig('2d_fan_reco.png', dpi=150, transparent=False, bbox_inches='tight')
 

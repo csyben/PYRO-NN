@@ -84,7 +84,7 @@ def example_cone_3d():
 
     # Get Phantom 3d
     phantom = shepp_logan.shepp_logan_3d(volume_shape)
-
+    phantom = np.expand_dims(phantom,axis=0)
 
 
     config = tf.ConfigProto()
@@ -101,7 +101,7 @@ def example_cone_3d():
         reco, redundancy_weighted_sino = sess.run([reco_tf, redundancy_weighted_sino_tf])
 
     plt.figure()
-    plt.imshow(reco[(int)(volume_shape[0]/2),:,:], cmap=plt.get_cmap('gist_gray'), vmin=0, vmax=0.4)
+    plt.imshow(np.squeeze(reco)[volume_shape[0]//2], cmap=plt.get_cmap('gist_gray'), vmin=0, vmax=0.4)
     plt.axis('off')
     plt.savefig('fdk_reco.png', dpi=150, transparent=False, bbox_inches='tight')
 

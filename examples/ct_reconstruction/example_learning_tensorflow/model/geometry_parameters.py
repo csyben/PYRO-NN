@@ -18,17 +18,17 @@ from pyronn.ct_reconstruction.helpers.trajectories          import circular_traj
 
 
 """
-    This file defines the Geometry parameters used by the hole model. 
+    This file defines the Geometry parameters used by the whole model. 
     A GeometryParallel2D instance is provided to be used by everyone that needs it.
 """
 
 # Declare Parameters
 volume_shape          = [256, 256]
-volume_spacing        = [0.5, 0.5]
-detector_shape        = 365
-detector_spacing      = 0.5
-number_of_projections = 720
-angular_range         = 2*np.pi
+volume_spacing        = [1 , 1]
+detector_shape        = 400
+detector_spacing      = 1
+number_of_projections = 180
+angular_range         = np.pi
 
 # Create Geometry class instance
 GEOMETRY = GeometryParallel2D(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_projections, angular_range)

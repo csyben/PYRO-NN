@@ -21,7 +21,7 @@ from pyronn.ct_reconstruction.layers.backprojection_3d import cone_backprojectio
 from pyronn.ct_reconstruction.geometry.geometry_cone_3d import GeometryCone3D
 from pyronn.ct_reconstruction.helpers.phantoms import shepp_logan
 from pyronn.ct_reconstruction.helpers.trajectories import circular_trajectory
-from pyronn.ct_reconstruction.helpers.filters.filters import ramp
+from pyronn.ct_reconstruction.helpers.filters.filters import ram_lak_3D
 
 
 def example_cone_3d():
@@ -49,7 +49,7 @@ def example_cone_3d():
 
     # Get Phantom 3d
     phantom = shepp_logan.shepp_logan_3d(volume_shape)
-
+    phantom = np.expand_dims(phantom, axis=0)
 
     config = tf.ConfigProto()
     config.gpu_options.per_process_gpu_memory_fraction = 0.5
@@ -59,21 +59,15 @@ def example_cone_3d():
         result = cone_projection3d(phantom, geometry)
         sinogram = result.eval()
 
-        #TODO: Use 3D ramp / ram_lak not 1D
-        # filtering
-        filter = ramp(int(geometry.detector_shape[1]))
-        sino_freq = np.fft.fft(sinogram, axis=2)
-        filtered_sino_freq = np.zeros_like(sino_freq)
-        for row in range(int(geometry.detector_shape[0])):
-            for projection in range(geometry.number_of_projections):
-                filtered_sino_freq[projection, row, :] = sino_freq[projection, row, :] * filter[:]
-
-        filtered_sino = np.fft.ifft(filtered_sino_freq, axis=2)
+        filter = ram_lak_3D(geometry)
+        sino_freq = np.fft.fft(sinogram, axis=-1)
+        filtered_sino_freq = sino_freq * filter
+        filtered_sino = np.fft.ifft(filtered_sino_freq, axis=-1)
 
         result_back_proj = cone_backprojection3d(filtered_sino, geometry)
         reco = result_back_proj.eval()
         plt.figure()
-        plt.imshow(reco[(int)(volume_shape[0]/2),:,:], cmap=plt.get_cmap('gist_gray'))
+        plt.imshow(np.squeeze(reco)[volume_shape[0]//2], cmap=plt.get_cmap('gist_gray'))
         plt.axis('off')
         plt.savefig('3d_cone_reco.png', dpi=150, transparent=False, bbox_inches='tight')
 
