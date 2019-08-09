@@ -46,7 +46,7 @@ def example_parallel_2d():
 
     # Get Phantom
     phantom = shepp_logan.shepp_logan_enhanced(volume_shape)
-
+    phantom = np.expand_dims(phantom, axis=0)
 
     # ------------------ Call Layers ------------------
     with tf.Session() as sess:
@@ -66,7 +66,7 @@ def example_parallel_2d():
         reco = result_back_proj.eval()
 
         plt.figure()
-        plt.imshow(reco, cmap=plt.get_cmap('gist_gray'))
+        plt.imshow(np.squeeze(reco), cmap=plt.get_cmap('gist_gray'))
         plt.axis('off')
         plt.savefig('2d_par_reco.png', dpi=150, transparent=False, bbox_inches='tight')
 

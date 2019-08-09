@@ -51,7 +51,7 @@ def example_fan_2d_shortscan():
 
     # Create Phantom
     phantom = shepp_logan_enhanced(volume_shape)
-
+    phantom = np.expand_dims(phantom,axis=0)
     # Build up Reconstruction Pipeline
     with tf.Session() as sess:
 
@@ -65,16 +65,16 @@ def example_fan_2d_shortscan():
 
         # Filtering: Create 2D Filter and pointwise multiply
         the_filter = filters.ram_lak_2D(geometry)
-        sino_fft = np.fft.fft(sinogram_redun_weighted, axis=1)
+        sino_fft = np.fft.fft(sinogram_redun_weighted, axis=-1)
         sino_filtered_fft = np.multiply(sino_fft, the_filter)
-        sinogram_filtered = np.fft.ifft(sino_filtered_fft, axis=1)
+        sinogram_filtered = np.fft.ifft(sino_filtered_fft, axis=-1)
 
         # Final Backprojection
         result_back_proj = fan_backprojection2d(sinogram_filtered, geometry)
         reco = result_back_proj.eval()
 
         plt.figure()
-        plt.imshow(reco, cmap=plt.get_cmap('gist_gray'))
+        plt.imshow(np.squeeze(reco), cmap=plt.get_cmap('gist_gray'))
         plt.axis('off')
         plt.savefig('2d_fan_short_scan_reco.png', dpi=150, transparent=False, bbox_inches='tight')
 
