@@ -50,6 +50,7 @@ def iterative_reconstruction():
     geometry.set_ray_vectors(circular_trajectory.circular_trajectory_2d(geometry))
 
     phantom = shepp_logan.shepp_logan_enhanced(volume_shape)
+    phantom = np.expand_dims(phantom,axis=0)
 
     config = tf.ConfigProto()
     config.gpu_options.per_process_gpu_memory_fraction = 0.5
@@ -67,7 +68,7 @@ def iterative_reconstruction():
         iter_pipeline.train(zero_vector,np.asarray(acquired_sinogram))
 
     plt.figure()
-    plt.imshow(iter_pipeline.result[0], cmap=plt.get_cmap('gist_gray'))
+    plt.imshow(np.squeeze(iter_pipeline.result), cmap=plt.get_cmap('gist_gray'))
     plt.axis('off')
     plt.savefig('iter_tv_reco.png', dpi=150, transparent=False, bbox_inches='tight')
 
@@ -95,8 +96,8 @@ class pipeline(object):
         g_opt = tf.train.AdamOptimizer(self.learning_rate)
 
         # Tensor placeholders that are initialized later. Input and label shape are assumed to be equal
-        self.input_placeholder = tf.placeholder(input_type, (None, input_shape[0], input_shape[1]))
-        self.label_placeholder = tf.placeholder(input_type, (None, label_shape[0], label_shape[1]))
+        self.input_placeholder = tf.placeholder(input_type, (None, input_shape[1], input_shape[2]))
+        self.label_placeholder = tf.placeholder(input_type, (None, label_shape[1], label_shape[2]))
 
         # Make pairs of elements. (X, Y) => ((x0, y0), (x1)(y1)),....
         image_set = tf.data.Dataset.from_tensor_slices((self.input_placeholder, self.label_placeholder))
@@ -128,12 +129,8 @@ class pipeline(object):
 
         learning_rate = self.args.learning_rate
 
-        zero_vector_train = np.expand_dims(zero_vector, axis=0)
-        acquired_sinogram_train = np.expand_dims(acquired_sinogram, axis=0)
-
         # initialise iterator with train data
-        #self.sess.run(self.train_init_op, feed_dict={self.input_placeholder: zero_vector_train, self.label_placeholder: acquired_sinogram_train})
-        self.sess.run(self.iterator.initializer, feed_dict={self.input_placeholder: zero_vector_train, self.label_placeholder: acquired_sinogram_train})
+        self.sess.run(self.iterator.initializer, feed_dict={self.input_placeholder: zero_vector, self.label_placeholder: acquired_sinogram})
 
         min_loss = 10000000000000000
         for epoch in range(1, self.args.num_epochs + 1):
