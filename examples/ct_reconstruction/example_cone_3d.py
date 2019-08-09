@@ -59,15 +59,8 @@ def example_cone_3d():
         result = cone_projection3d(phantom, geometry)
         sinogram = result.eval()
 
-        #TODO: Use 3D ramp / ram_lak not 1D
-        # filtering
         filter = ram_lak_3D(geometry)
-        #filter = ramp(int(geometry.detector_shape[1]))
         sino_freq = np.fft.fft(sinogram, axis=-1)
-        # filtered_sino_freq = np.zeros_like(sino_freq)
-        # for row in range(int(geometry.detector_shape[0])):
-        #     for projection in range(geometry.number_of_projections):
-        #         filtered_sino_freq[projection, row, :] = sino_freq[projection, row, :] * filter[:]
         filtered_sino_freq = sino_freq * filter
         filtered_sino = np.fft.ifft(filtered_sino_freq, axis=-1)
 
