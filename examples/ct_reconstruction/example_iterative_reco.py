@@ -57,7 +57,8 @@ def iterative_reconstruction():
     config.gpu_options.allow_growth = True
     # ------------------ Call Layers ------------------
     with tf.Session(config=config) as sess:
-        acquired_sinogram = generate_sinogram(phantom,projection_2d.parallel_projection2d,geometry)
+        acquired_sinogram = generate_sinogram(phantom[0,:,:],projection_2d.parallel_projection2d,geometry)
+        acquired_sinogram = np.expand_dims(acquired_sinogram, axis=0)
 
         acquired_sinogram = acquired_sinogram + np.random.normal(
             loc=np.mean(np.abs(acquired_sinogram)), scale=np.std(acquired_sinogram), size=acquired_sinogram.shape) * 0.02
