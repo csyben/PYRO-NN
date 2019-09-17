@@ -22,7 +22,6 @@ If you find this helpful, we would kindly ask you to reference our article publi
 
    @article{PYRONN2019,
    author = {Syben, Christopher and Michen, Markus and Stimpel, Bernhard and Seitz, Stephan and Ploner, Stefan and Maier, Andreas K.},
-   
    title = {Technical Note: PYRO-NN: Python reconstruction operators in neural networks},
    year = {2019},
    journal = {Medical Physics},
