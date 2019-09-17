@@ -22,14 +22,8 @@ If you find this helpful, we would kindly ask you to reference our article publi
 @article{PYRONN2019,
 author = {Syben, Christopher and Michen, Markus and Stimpel, Bernhard and Seitz, Stephan and Ploner, Stefan and Maier, Andreas K.},
 title = {Technical Note: PYRO-NN: Python reconstruction operators in neural networks},
+year = {2019},
 journal = {Medical Physics},
-volume = {0},
-number = {0},
-pages = {},
-keywords = {inverse problems, known operator learning, machine learning, open source, reconstruction},
-doi = {10.1002/mp.13753},
-url = {https://aapm.onlinelibrary.wiley.com/doi/abs/10.1002/mp.13753},
-eprint = {https://aapm.onlinelibrary.wiley.com/doi/pdf/10.1002/mp.13753},
 }
 ```
 
