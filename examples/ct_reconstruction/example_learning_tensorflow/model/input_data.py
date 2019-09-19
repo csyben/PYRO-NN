@@ -32,7 +32,7 @@ def generate_training_data():
         phantom = np.expand_dims( primitives_2d.circle(GEOMETRY.volume_shape, center_pos, n), axis = 0)
         label_list.append(phantom)
     #Create sinogram data
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
         for phantom in label_list:
             sinogram = generate_sinogram_parallel_2d(phantom, GEOMETRY)
             input_data_list.append(sinogram)
@@ -46,7 +46,7 @@ def generate_validation_data(number_of_samples):
     data   = np.empty((number_of_samples,) + tuple(GEOMETRY.sinogram_shape))
     labels = np.empty((number_of_samples,) + tuple(GEOMETRY.volume_shape))
 
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
 
         # build growing rectangles
         for i in range(number_of_samples):
@@ -66,7 +66,7 @@ def get_test_data(number_of_samples=1):
     data   = np.empty((number_of_samples,) + tuple(GEOMETRY.sinogram_shape))
     labels = np.empty((number_of_samples,) + tuple(GEOMETRY.volume_shape))
 
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
 
         # get shepp logan 2d
         if number_of_samples == 1:
@@ -87,7 +87,7 @@ def get_test_cupping_data():
     data = np.empty((1,) + tuple(GEOMETRY.sinogram_shape))
     labels = np.empty((1,) + tuple(GEOMETRY.volume_shape))
 
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
          labels[0] = primitives_2d.circle(GEOMETRY.volume_shape,
                                           GEOMETRY.volume_shape//2,
                                           np.min(GEOMETRY.volume_shape//2))

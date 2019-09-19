@@ -31,13 +31,13 @@ class nn_model:
     def __init__(self, geometry):
         self.geometry = geometry
 
-        self.cosine_weight = tf.get_variable(name='cosine_weight', dtype=tf.float32,
+        self.cosine_weight = tf.compat.v1.get_variable(name='cosine_weight', dtype=tf.float32,
                                              initializer=ct_weights.cosine_weights_3d(self.geometry), trainable=False)
 
-        self.redundancy_weight = tf.get_variable(name='redundancy_weight', dtype=tf.float32,
+        self.redundancy_weight = tf.compat.v1.get_variable(name='redundancy_weight', dtype=tf.float32,
                                              initializer=ct_weights.parker_weights_3d(self.geometry), trainable=False)
 
-        self.filter = tf.get_variable(name='reco_filter', dtype=tf.float32, initializer=ram_lak_3D(self.geometry), trainable=False)
+        self.filter = tf.compat.v1.get_variable(name='reco_filter', dtype=tf.float32, initializer=ram_lak_3D(self.geometry), trainable=False)
 
 
 
@@ -45,9 +45,9 @@ class nn_model:
         self.sinogram_cos = tf.multiply(sinogram, self.cosine_weight)
         self.redundancy_weighted_sino = tf.multiply(self.sinogram_cos,self.redundancy_weight)
 
-        self.weighted_sino_fft = tf.fft(tf.cast(self.redundancy_weighted_sino, dtype=tf.complex64))
+        self.weighted_sino_fft = tf.compat.v1.fft(tf.cast(self.redundancy_weighted_sino, dtype=tf.complex64))
         self.filtered_sinogram_fft = tf.multiply(self.weighted_sino_fft, tf.cast(self.filter,dtype=tf.complex64))
-        self.filtered_sinogram = tf.real(tf.ifft(self.filtered_sinogram_fft))
+        self.filtered_sinogram = tf.compat.v1.real(tf.compat.v1.ifft(self.filtered_sinogram_fft))
 
         self.reconstruction = cone_backprojection3d(self.filtered_sinogram,self.geometry, hardware_interp=True)
 
@@ -87,16 +87,16 @@ def example_cone_3d():
     phantom = np.expand_dims(phantom,axis=0)
 
 
-    config = tf.ConfigProto()
+    config = tf.compat.v1.ConfigProto()
     config.gpu_options.per_process_gpu_memory_fraction = 0.5
     config.gpu_options.allow_growth = True
     # ------------------ Call Layers ------------------
-    with tf.Session(config=config) as sess:
+    with tf.compat.v1.Session(config=config) as sess:
         sinogram = generate_sinogram.generate_sinogram(phantom, cone_projection3d, geometry)
 
         model = nn_model(geometry)
-        sess.run(tf.global_variables_initializer())
-        sess.run(tf.local_variables_initializer())
+        sess.run(tf.compat.v1.global_variables_initializer())
+        sess.run(tf.compat.v1.local_variables_initializer())
         reco_tf, redundancy_weighted_sino_tf = model.model(sinogram)
         reco, redundancy_weighted_sino = sess.run([reco_tf, redundancy_weighted_sino_tf])
 

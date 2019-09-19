@@ -19,7 +19,7 @@ from ...layers.projection_3d import cone_projection3d
 
 
 def generate_sinogram(phantom, layer, geometry):
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
         result = layer(phantom, geometry)
         sinogram = result.eval()
     return sinogram

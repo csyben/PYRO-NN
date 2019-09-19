@@ -52,11 +52,11 @@ def iterative_reconstruction():
     phantom = shepp_logan.shepp_logan_enhanced(volume_shape)
     phantom = np.expand_dims(phantom,axis=0)
 
-    config = tf.ConfigProto()
+    config = tf.compat.v1.ConfigProto()
     config.gpu_options.per_process_gpu_memory_fraction = 0.5
     config.gpu_options.allow_growth = True
     # ------------------ Call Layers ------------------
-    with tf.Session(config=config) as sess:
+    with tf.compat.v1.Session(config=config) as sess:
         acquired_sinogram = generate_sinogram(phantom,projection_2d.parallel_projection2d,geometry)
 
         acquired_sinogram = acquired_sinogram + np.random.normal(
@@ -85,22 +85,22 @@ class pipeline(object):
         self.regularizer_weight = 0.5
 
     def init_placeholder_graph(self):
-        self.learning_rate = tf.get_variable(name='learning_rate', dtype=tf.float32, initializer=tf.constant(0.0001), trainable=False)
-        self.learning_rate_placeholder = tf.placeholder(tf.float32, name='learning_rate_placeholder')
+        self.learning_rate = tf.compat.v1.get_variable(name='learning_rate', dtype=tf.float32, initializer=tf.constant(0.0001), trainable=False)
+        self.learning_rate_placeholder = tf.compat.v1.placeholder(tf.float32, name='learning_rate_placeholder')
         self.set_learning_rate = self.learning_rate.assign(self.learning_rate_placeholder)
 
 
     def build_graph(self, input_type, input_shape, label_shape):
 
         self.init_placeholder_graph()
-        g_opt = tf.train.AdamOptimizer(self.learning_rate)
+        g_opt = tf.compat.v1.train.AdamOptimizer(self.learning_rate)
 
         # Tensor placeholders that are initialized later. Input and label shape are assumed to be equal
-        self.input_placeholder = tf.placeholder(input_type, (None, input_shape[1], input_shape[2]))
-        self.label_placeholder = tf.placeholder(input_type, (None, label_shape[1], label_shape[2]))
+        self.input_placeholder = tf.compat.v1.placeholder(input_type, (None, input_shape[1], input_shape[2]))
+        self.label_placeholder = tf.compat.v1.placeholder(input_type, (None, label_shape[1], label_shape[2]))
 
         # Make pairs of elements. (X, Y) => ((x0, y0), (x1)(y1)),....
-        image_set = tf.data.Dataset.from_tensor_slices((self.input_placeholder, self.label_placeholder))
+        image_set = tf.compat.v1.data.Dataset.from_tensor_slices((self.input_placeholder, self.label_placeholder))
         # Identity mapping operation is needed to include multi-tthreaded queue buffering.
         image_set = image_set.map(lambda x, y: (x, y), num_parallel_calls=4).prefetch(buffer_size=200)
         # Batch dataset. Also do this if batchsize==1 to add the mandatory first axis for the batch_size
@@ -117,15 +117,15 @@ class pipeline(object):
         tv_loss_x = tf.image.total_variation(tf.transpose(self.current_reco))
         tv_loss_y = tf.image.total_variation(self.current_reco)
 
-        self.loss = tf.reduce_sum(tf.squared_difference(self.label_element, self.current_sino)) + self.regularizer_weight*(tv_loss_x+tv_loss_y)
+        self.loss = tf.reduce_sum(tf.compat.v1.squared_difference(self.label_element, self.current_sino)) + self.regularizer_weight*(tv_loss_x+tv_loss_y)
         self.train_op = g_opt.minimize(self.loss)
 
 
     def train(self, zero_vector, acquired_sinogram):
         self.build_graph(zero_vector.dtype, zero_vector.shape, acquired_sinogram.shape)
 
-        self.sess.run(tf.global_variables_initializer())
-        self.sess.run(tf.local_variables_initializer())
+        self.sess.run(tf.compat.v1.global_variables_initializer())
+        self.sess.run(tf.compat.v1.local_variables_initializer())
 
         learning_rate = self.args.learning_rate
 
@@ -152,7 +152,7 @@ class iterative_reco_model:
 
     def __init__(self, geometry, reco_initialization):
         self.geometry = geometry
-        self.reco = tf.get_variable(name='reco', dtype=tf.float32,
+        self.reco = tf.compat.v1.get_variable(name='reco', dtype=tf.float32,
                                     initializer=tf.expand_dims(reco_initialization, axis=0),
                                     trainable=True, constraint=lambda x: tf.clip_by_value(x, 0, np.infty))
 

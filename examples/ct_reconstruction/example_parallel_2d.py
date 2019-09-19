@@ -49,7 +49,7 @@ def example_parallel_2d():
     phantom = np.expand_dims(phantom, axis=0)
 
     # ------------------ Call Layers ------------------
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
         result = parallel_projection2d(phantom, geometry)
         sinogram = result.eval()
 

@@ -26,10 +26,10 @@ data_test, label_test = get_test_data(args.NUM_TEST_SAMPLES)
 data_cupping, label_cupping = get_test_cupping_data()
 
 # Session
-config = tf.ConfigProto()
+config = tf.compat.v1.ConfigProto()
 config.gpu_options.per_process_gpu_memory_fraction = 0.5
 config.gpu_options.allow_growth = True
-with tf.Session(config=config) as sess:
+with tf.compat.v1.Session(config=config) as sess:
     training = pipeline(sess)
     training.train(data,label,data_val,label_val)
 

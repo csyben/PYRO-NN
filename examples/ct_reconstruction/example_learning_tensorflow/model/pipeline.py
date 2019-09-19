@@ -29,21 +29,21 @@ class pipeline(object):
 
     def init_placeholder_graph(self):
 
-        self.learning_rate = tf.get_variable(name='learning_rate', dtype=tf.float32, initializer=tf.constant(1e-15), trainable=False)
-        self.learning_rate_placeholder = tf.placeholder(tf.float32, name='learning_rate_placeholder')
+        self.learning_rate = tf.compat.v1.get_variable(name='learning_rate', dtype=tf.float32, initializer=tf.constant(1e-15), trainable=False)
+        self.learning_rate_placeholder = tf.compat.v1.placeholder(tf.float32, name='learning_rate_placeholder')
         self.set_learning_rate = self.learning_rate.assign(self.learning_rate_placeholder)
 
-        self.is_training = tf.get_variable(name="is_training", shape=[], dtype=tf.bool, trainable=False)
+        self.is_training = tf.compat.v1.get_variable(name="is_training", shape=[], dtype=tf.bool, trainable=False)
         self.set_training = self.is_training.assign(True)
         self.set_validation = self.is_training.assign(False)
 
-        self.avg_loss_placeholder = tf.placeholder(tf.float32, name='avg_loss_placeholder')
-        self.avg_validation_loss_placeholder = tf.placeholder(tf.float32, name='avg_validation_loss_placeholder')
+        self.avg_loss_placeholder = tf.compat.v1.placeholder(tf.float32, name='avg_loss_placeholder')
+        self.avg_validation_loss_placeholder = tf.compat.v1.placeholder(tf.float32, name='avg_validation_loss_placeholder')
 
 
     def data_loader(self, inputs, labels):
         # Make pairs of elements. (X, Y) => ((x0, y0), (x1)(y1)),....
-        image_set = tf.data.Dataset.from_tensor_slices((inputs, labels))
+        image_set = tf.compat.v1.data.Dataset.from_tensor_slices((inputs, labels))
         # Identity mapping operation is needed to include multi-tthreaded queue buffering.
         image_set = image_set.map(lambda x, y: (x, y), num_parallel_calls=4).prefetch(buffer_size=200)
         # Batch dataset. Also do this if batchsize==1 to add the mandatory first axis for the batch_size
@@ -61,14 +61,14 @@ class pipeline(object):
         self.init_placeholder_graph()
 
         #Optimizer
-        optimizer = tf.train.AdamOptimizer(self.learning_rate, epsilon=0.1)
+        optimizer = tf.compat.v1.train.AdamOptimizer(self.learning_rate, epsilon=0.1)
         #optimizer = tf.train.GradientDescentOptimizer(self.learning_rate)
         # Tensor placeholders that are initialized later. Input and label shape are assumed to be equal
-        self.inputs_train = tf.placeholder(tf.float32, (None, *GEOMETRY.sinogram_shape))
-        self.labels_train = tf.placeholder(tf.float32, (None, *GEOMETRY.volume_shape))
+        self.inputs_train = tf.compat.v1.placeholder(tf.float32, (None, *GEOMETRY.sinogram_shape))
+        self.labels_train = tf.compat.v1.placeholder(tf.float32, (None, *GEOMETRY.volume_shape))
 
-        self.inputs_validation = tf.placeholder(tf.float32, (None, *GEOMETRY.sinogram_shape))
-        self.labels_validation = tf.placeholder(tf.float32, (None, *GEOMETRY.volume_shape))
+        self.inputs_validation = tf.compat.v1.placeholder(tf.float32, (None, *GEOMETRY.sinogram_shape))
+        self.labels_validation = tf.compat.v1.placeholder(tf.float32, (None, *GEOMETRY.volume_shape))
 
         # Get next_element-"operator" and iterator that is initialized later
         self.iterator_train = self.data_loader(self.inputs_train, self.labels_train)
@@ -86,11 +86,11 @@ class pipeline(object):
 
 
         # Summary stuff
-        tf.summary.scalar('avg loss', self.avg_loss_placeholder)
-        tf.summary.scalar('avg validation loss', self.avg_validation_loss_placeholder)
-        self.writer = tf.summary.FileWriter(args.LOG_DIR)
-        self.summary = tf.summary.merge_all()
-        self.saver = tf.train.Saver()
+        tf.compat.v1.summary.scalar('avg loss', self.avg_loss_placeholder)
+        tf.compat.v1.summary.scalar('avg validation loss', self.avg_validation_loss_placeholder)
+        self.writer = tf.compat.v1.summary.FileWriter(args.LOG_DIR)
+        self.summary = tf.compat.v1.summary.merge_all()
+        self.saver = tf.compat.v1.train.Saver()
 
     def validation(self, epoch):
         #Switch to validation dataset
@@ -108,11 +108,11 @@ class pipeline(object):
     def train(self, inputs_train, labels_train, inputs_validation, labels_validation):
         #Setup & initialize graph
         self.build_graph()
-        self.sess.run(tf.global_variables_initializer())
-        self.sess.run(tf.local_variables_initializer())
+        self.sess.run(tf.compat.v1.global_variables_initializer())
+        self.sess.run(tf.compat.v1.local_variables_initializer())
 
         #Saver
-        self.saver = tf.train.Saver(max_to_keep=100)
+        self.saver = tf.compat.v1.train.Saver(max_to_keep=100)
 
         #Feed
         self.sess.run(self.iterator_train.initializer, feed_dict={self.inputs_train: inputs_train, self.labels_train: labels_train})

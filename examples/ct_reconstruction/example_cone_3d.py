@@ -51,11 +51,11 @@ def example_cone_3d():
     phantom = shepp_logan.shepp_logan_3d(volume_shape)
     phantom = np.expand_dims(phantom, axis=0)
 
-    config = tf.ConfigProto()
+    config = tf.compat.v1.ConfigProto()
     config.gpu_options.per_process_gpu_memory_fraction = 0.5
     config.gpu_options.allow_growth = True
     # ------------------ Call Layers ------------------
-    with tf.Session(config = config) as sess:
+    with tf.compat.v1.Session() as sess:
         result = cone_projection3d(phantom, geometry)
         sinogram = result.eval()
 

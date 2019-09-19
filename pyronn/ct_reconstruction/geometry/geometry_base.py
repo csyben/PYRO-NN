@@ -66,7 +66,7 @@ class GeometryBase:
         """
             Wraps the TensorProto creation function.
         """
-        return tf.contrib.util.make_tensor_proto(member, tf.float32)
+        return tf.compat.v1.make_tensor_proto(member, tf.float32)
 
     class SetTensorProtoProperty(object):
         """

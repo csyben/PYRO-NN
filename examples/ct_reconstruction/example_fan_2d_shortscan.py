@@ -53,7 +53,7 @@ def example_fan_2d_shortscan():
     phantom = shepp_logan_enhanced(volume_shape)
     phantom = np.expand_dims(phantom,axis=0)
     # Build up Reconstruction Pipeline
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
 
         # Create Sinogram of Phantom
         result = fan_projection2d(phantom, geometry)

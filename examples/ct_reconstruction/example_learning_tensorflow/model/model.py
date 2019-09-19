@@ -25,8 +25,8 @@ class filter_model:
 
     def __init__(self):
         filter = ramp(GEOMETRY.detector_shape[0])
-        self.filter_weights = tf.get_variable(name='filter_frequency', dtype=tf.float32, initializer=filter, trainable=True)  # init as ramp filter
-        self.filter_weights_placeholder = tf.placeholder(tf.float32, name='filter_weights_placeholder')
+        self.filter_weights = tf.compat.v1.get_variable(name='filter_frequency', dtype=tf.float32, initializer=filter, trainable=True)  # init as ramp filter
+        self.filter_weights_placeholder = tf.compat.v1.placeholder(tf.float32, name='filter_weights_placeholder')
         self.set_filter_weights = self.filter_weights.assign(self.filter_weights_placeholder)
 
 
@@ -46,13 +46,13 @@ class filter_model:
                 Returns:
                 backprojection_layer: The last layer before the loss layer.
                 """
-        sinogram_frequency = tf.fft(tf.cast(input_sinogram,dtype=tf.complex64))
+        sinogram_frequency = tf.compat.v1.fft(tf.cast(input_sinogram,dtype=tf.complex64))
         filtered_sinogram_frequency = tf.multiply(sinogram_frequency, tf.cast(self.filter_weights,dtype=tf.complex64))
-        filtered_sinogram = tf.real(tf.ifft(filtered_sinogram_frequency))
+        filtered_sinogram = tf.compat.v1.real(tf.compat.v1.ifft(filtered_sinogram_frequency))
         reco = parallel_backprojection2d(filtered_sinogram, GEOMETRY)
         #tf.nn.relu(reco)
         return reco, self.filter_weights
 
     def l2_loss(self, predictions, gt_labels):
-        self.loss = tf.reduce_sum(tf.squared_difference(predictions, gt_labels))
+        self.loss = tf.reduce_sum(tf.compat.v1.squared_difference(predictions, gt_labels))
         return self.loss
