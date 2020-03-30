@@ -17,11 +17,11 @@ import tensorflow as tf
 import argparse
 import matplotlib.pyplot as plt
 
-from pyronn.ct_reconstruction.geometry.geometry_parallel_2d import GeometryParallel2D
+from pyronn.ct_reconstruction.geometry.geometry_cone_3d import GeometryCone3D
 from pyronn.ct_reconstruction.helpers.trajectories import circular_trajectory
 from pyronn.ct_reconstruction.helpers.phantoms import shepp_logan
 from pyronn.ct_reconstruction.helpers.misc.generate_sinogram import generate_sinogram
-from pyronn.ct_reconstruction.layers import projection_2d
+from pyronn.ct_reconstruction.layers import projection_3d
 
 
 def iterative_reconstruction():
@@ -33,22 +33,23 @@ def iterative_reconstruction():
     args = parser.parse_args()
 
     # Volume Parameters:
-    volume_size = 512
-    volume_shape = [volume_size, volume_size]
-    volume_spacing = [0.5, 0.5]
+    volume_size = 64
+    volume_shape = [volume_size, volume_size, volume_size]
+    volume_spacing = [1,1,1]
 
     # Detector Parameters:
-    detector_shape = 625
-    detector_spacing = 0.5
+    detector_shape = [150,150]
+    detector_spacing = [1,1]
 
     # Trajectory Parameters:
     number_of_projections = 30
     angular_range = np.radians(200)  # 200 * np.pi / 180
 
     # create Geometry class
-    geometry = GeometryParallel2D(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_projections, angular_range)
-    geometry.set_ray_vectors(circular_trajectory.circular_trajectory_2d(geometry))
-
+    geometry = GeometryCone3D(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_projections, angular_range, 1200.0, 750.0 )
+    rays = circular_trajectory.circular_trajectory_3d(geometry)
+    # geometry.set_ray_vectors(np.concatenate([rays, np.zeros((30,1))], axis=-1))
+    geometry.set_projection_matrices(rays)
     phantom = shepp_logan.shepp_logan_enhanced(volume_shape)
     phantom = np.expand_dims(phantom,axis=0)
 
@@ -57,10 +58,10 @@ def iterative_reconstruction():
     config.gpu_options.allow_growth = True
     # ------------------ Call Layers ------------------
     with tf.Session(config=config) as sess:
-        acquired_sinogram = generate_sinogram(phantom,projection_2d.parallel_projection2d,geometry)
+        acquired_sinogram = generate_sinogram(phantom,projection_3d.cone_projection3d,geometry)
 
-        acquired_sinogram = acquired_sinogram + np.random.normal(
-            loc=np.mean(np.abs(acquired_sinogram)), scale=np.std(acquired_sinogram), size=acquired_sinogram.shape) * 0.02
+        # acquired_sinogram = acquired_sinogram + np.random.normal(
+        #     loc=np.mean(np.abs(acquired_sinogram)), scale=np.std(acquired_sinogram), size=acquired_sinogram.shape) * 0.02
 
         zero_vector = np.zeros(np.shape(phantom), dtype=np.float32)
 
@@ -96,8 +97,8 @@ class pipeline(object):
         g_opt = tf.train.AdamOptimizer(self.learning_rate)
 
         # Tensor placeholders that are initialized later. Input and label shape are assumed to be equal
-        self.input_placeholder = tf.placeholder(input_type, (None, input_shape[1], input_shape[2]))
-        self.label_placeholder = tf.placeholder(input_type, (None, label_shape[1], label_shape[2]))
+        self.input_placeholder = tf.placeholder(input_type, (None, input_shape[1], input_shape[2], input_shape[3]))
+        self.label_placeholder = tf.placeholder(input_type, (None, label_shape[1], label_shape[2], label_shape[3]))
 
         # Make pairs of elements. (X, Y) => ((x0, y0), (x1)(y1)),....
         image_set = tf.data.Dataset.from_tensor_slices((self.input_placeholder, self.label_placeholder))
@@ -117,7 +118,7 @@ class pipeline(object):
         tv_loss_x = tf.image.total_variation(tf.transpose(self.current_reco))
         tv_loss_y = tf.image.total_variation(self.current_reco)
 
-        self.loss = tf.reduce_sum(tf.squared_difference(self.label_element, self.current_sino)) + self.regularizer_weight*(tv_loss_x+tv_loss_y)
+        self.loss = tf.reduce_sum(tf.reduce_sum(tf.squared_difference(self.label_element, self.current_sino)) + self.regularizer_weight*(tv_loss_x+tv_loss_y))
         self.train_op = g_opt.minimize(self.loss)
 
 
@@ -158,7 +159,7 @@ class iterative_reco_model:
 
     def model(self, input_volume):
         self.updated_reco = tf.add(input_volume, self.reco)
-        self.current_sino = projection_2d.parallel_projection2d(self.updated_reco, self.geometry)
+        self.current_sino = projection_3d.cone_projection3d(self.updated_reco, self.geometry)
         return self.current_sino, self.reco
 
 
