@@ -92,6 +92,6 @@ def _backproject_grad(op, grad):
         volume_spacing=op.get_attr("volume_spacing"),
         detector_origin=op.get_attr("detector_origin"),
         detector_spacing=op.get_attr("detector_spacing"),
-        ray_vectors=op.get_attr("projection_matrices"),
+        ray_vectors=op.get_attr("ray_vectors"),
     )
     return [proj]
