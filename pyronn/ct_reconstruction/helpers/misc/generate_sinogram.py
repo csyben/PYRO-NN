@@ -19,25 +19,21 @@ from ...layers.projection_3d import cone_projection3d
 
 
 def generate_sinogram(phantom, layer, geometry):
-    with tf.Session() as sess:
-        result = layer(phantom, geometry)
-        sinogram = result.eval().copy()
-    return sinogram
+
+    result = layer(phantom, geometry)
+    return result
 
 
 def generate_sinogram_parallel_2d(phantom, geometry):
     result = parallel_projection2d(phantom, geometry)
-    sinogram = result.eval()
-    return sinogram
+    return result
 
 
 def generate_sinogram_fan_2d(phantom, geometry):
     result = fan_projection2d(phantom, geometry)
-    sinogram = result.eval()
-    return sinogram
+    return result
 
 
 def generate_sinogram_cone_3d(phantom, geometry):
     result = cone_projection3d(phantom, geometry)
-    sinogram = result.eval()
-    return sinogram
+    return result
