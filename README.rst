@@ -31,6 +31,7 @@ Update
 =========
 With the new pyronn 0.1.0 Tensorflow 2.x will be supported. The default mode for pyronn is eager execution like Tensorflow itself.
 Major features in the update are:
+
 - Tensorflow 2.x support
     - Eager execution for all pyronn_layers
     - Keras support
