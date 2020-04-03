@@ -19,3 +19,6 @@ examples/ct_reconstruction/example_learning_tensorflow/logs
 examples/ct_reconstruction/example_learning_tensorflow/trained_models
 examples/ct_reconstruction/example_learning_tensorflow/plots/*.png
 examples/ct_reconstruction/example_learning_tensorflow/plots/*.pdf
+
+#ignore local venv
+interp/
