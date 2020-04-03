@@ -16,7 +16,7 @@ PYRO-NN brings state-of-the-art reconstruction algorithm to neural networks inte
 Open access paper available under:
 https://aapm.onlinelibrary.wiley.com/doi/full/10.1002/mp.13753
 
-pyronn depends on the pyronn_layers. They are now installed via pip. The source code of the pyronn_layers can be found under
+pyronn depends on the pyronn_layers. They are now installed via pip. The source code of the pyronn_layers can be found under:
 https://github.com/csyben/PYRO-NN-Layers
 
 If you find this helpful, we would kindly ask you to reference our article published in medical physics:
@@ -122,9 +122,8 @@ the Tensorflow session scope:
 
     phantom = shepp_logan.shepp_logan_enhanced(par_geometry.volume_shape)
 
-    with tf.Session as sess:
-        sinogram = sino_helper.generate_sinogram(phantom, parallel_projection2d, par_geometry)
-        reconstruction = reco_helper.generate_reco(sinogram, parallel_backprojection2d, par_geometry)
+    sinogram = sino_helper.generate_sinogram(phantom, parallel_projection2d, par_geometry)
+    reconstruction = reco_helper.generate_reco(sinogram, parallel_backprojection2d, par_geometry)
 
 In the following the example using the Layers directly is shown (Note that the Layers are within the Tensorflow graph context
 and therefore need to be evaluated before the result can be accessed):
@@ -136,9 +135,7 @@ and therefore need to be evaluated before the result can be accessed):
 
     phantom = shepp_logan.shepp_logan_enhanced(par_geometry.volume_shape)
 
-    with tf.Session as sess:
-        result = parallel_projection2d(phantom, par_geometry)
-        sinogram = result.eval()
+    sinogram = parallel_projection2d(phantom, par_geometry)
 
 Using the PYRO-NN Layers directly registers the respective gradient, thus they can be used as normal Tensorflow Layers within the graph.
 For more details checkout the examples which are covering the different geometry and application cases.
