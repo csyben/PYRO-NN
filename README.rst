@@ -16,7 +16,7 @@ PYRO-NN brings state-of-the-art reconstruction algorithm to neural networks inte
 Open access paper available under:
 https://aapm.onlinelibrary.wiley.com/doi/full/10.1002/mp.13753
 
-To use pyronn you need to build the operators from sources or install the provided binaries from
+pyronn depends on the pyronn_layers. They are now installed via pip. The source code of the pyronn_layers can be found under
 https://github.com/csyben/PYRO-NN-Layers
 
 If you find this helpful, we would kindly ask you to reference our article published in medical physics:
