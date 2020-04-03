@@ -13,11 +13,14 @@ PYRO-NN
 =========
 
 PYRO-NN brings state-of-the-art reconstruction algorithm to neural networks integrated into Tensorflow.
+Open access paper available under:
+https://aapm.onlinelibrary.wiley.com/doi/full/10.1002/mp.13753
 
 To use pyronn you need to build the operators from sources or install the provided binaries from
 https://github.com/csyben/PYRO-NN-Layers
 
 If you find this helpful, we would kindly ask you to reference our article published in medical physics:
+
 .. code-block:: 
 
    @article{PYRONN2019,
