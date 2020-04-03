@@ -40,7 +40,7 @@ Major features in the update are:
 
 Planned
 =========
-<del>The support for Tensorflow 2.0 is planned. A development branch is currently planned for november 2019. For the update following steps need to be made:
+<s>The support</s> for Tensorflow 2.0 is planned. A development branch is currently planned for november 2019. For the update following steps need to be made:
 
 - PYRO-NN Layer have to be adapted for eager execution
    - Refactor Layers attributes as tensor proto is not working with eager execution
@@ -49,7 +49,8 @@ Planned
 
 Idepented of Tf2.0:
 - PYRO-NN Layers as pip package
-</del>
+
+
 Installation
 ============
 
