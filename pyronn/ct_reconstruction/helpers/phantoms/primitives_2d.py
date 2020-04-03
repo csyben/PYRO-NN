@@ -28,12 +28,12 @@ def circle(shape, pos, radius, value=1.0):
         np.array filled with circle
     """
     # create meshgrid of coords
-    xx, yy = np.mgrid[:shape[0], :shape[1]]
+    xx, yy = np.mgrid[:shape[0], :shape[1]].astype(dtype=np.float32)
 
     # calc squared distance to pos
     circle = (xx - pos[1]) ** 2 + (yy - pos[0]) ** 2
 
-    return (circle <= radius ** 2) * value
+    return (circle <= radius ** 2) *  (np.float32)(value)
 
 
 def ellipse(shape, pos, half_axes, value=1.0, phi=0.0):
@@ -50,7 +50,7 @@ def ellipse(shape, pos, half_axes, value=1.0, phi=0.0):
         np.array filled with ellipse
     """
     # create meshgrid of coords
-    xx, yy = np.mgrid[:shape[0], :shape[1]]
+    xx, yy = np.mgrid[:shape[0], :shape[1]].astype(dtype=np.float32)
 
     # move to pos
     xc = (xx - pos[1])
@@ -82,7 +82,7 @@ def rect(shape, pos, size, value=1.0):
         np.array filled with rectangle
     """
     # create array and populate it with value
-    rectangle = np.zeros(shape)
+    rectangle = np.zeros(shape, dtype=np.float32)
     rectangle[pos[0]:pos[0] + size[0], pos[1]:pos[1] + size[1]] = value
 
     return rectangle

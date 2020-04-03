@@ -97,7 +97,7 @@ def shepp_logan_enhanced(shape):
         Phantom of shape as np.array
 
     """
-    shepp_logan = np.zeros(shape)
+    shepp_logan = np.zeros(shape, dtype=np.float32)
 
     # create meshgrid of coords
     yy_base, xx_base = np.mgrid[:shape[0], :shape[1]]
@@ -154,7 +154,7 @@ def shepp_logan_3d(shape):
     Returns:
         Phantom of shape as np.array
     """
-    shepp_logan = np.zeros(shape)
+    shepp_logan = np.zeros(shape, dtype=np.float32)
 
     # create meshgrid of coords
     zz_base, yy_base, xx_base = np.mgrid[:shape[0], :shape[1], :shape[2]]
