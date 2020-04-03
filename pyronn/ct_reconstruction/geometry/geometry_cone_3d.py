@@ -40,7 +40,7 @@ class GeometryCone3D(GeometryBase):
         self.projection_multiplier = self.source_isocenter_distance * self.source_detector_distance * detector_spacing[-1] * np.pi / self.number_of_projections
         self.step_size = 1.0
 
-    def set_projection_matrices(self, projection_matrices):
+    def set_trajectory(self, projection_matrices):
         """
             Sets the member projection_matrices.
         Args:
@@ -48,7 +48,3 @@ class GeometryCone3D(GeometryBase):
         """
         self.projection_matrices = np.array(projection_matrices, self.np_dtype)
 
-    @GeometryBase.SetTensorProtoProperty
-    def projection_matrices(self, value):
-        self.__dict__['projection_matrices'] = value
-        self.tensor_proto_projection_matrices = super().to_tensor_proto(self.projection_matrices)
