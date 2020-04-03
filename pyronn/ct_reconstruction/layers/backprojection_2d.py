@@ -14,6 +14,8 @@
 
 from tensorflow.python.framework import ops
 import pyronn_layers
+import numpy as np
+import tensorflow as tf
 
 
 # parallel_backprojection2d
@@ -26,14 +28,14 @@ def parallel_backprojection2d(sinogram, geometry):
     Returns:
             Initialized lme_custom_ops.parallel_backprojection2d layer.
     """
+    batch = np.shape(sinogram)[0]
     return pyronn_layers.parallel_backprojection2d(sinogram,
-                                                    sinogram_shape=geometry.sinogram_shape,
-                                                    volume_shape=geometry.volume_shape,
-                                                    volume_origin=geometry.tensor_proto_volume_origin,
-                                                    detector_origin=geometry.tensor_proto_detector_origin,
-                                                    volume_spacing=geometry.tensor_proto_volume_spacing,
-                                                    detector_spacing=geometry.tensor_proto_detector_spacing,
-                                                    ray_vectors=geometry.tensor_proto_ray_vectors)
+                                                   volume_shape=geometry.volume_shape,
+                                                    volume_origin   =np.broadcast_to(geometry.volume_origin,[batch,*np.shape(geometry.volume_origin)]),
+                                                    detector_origin =np.broadcast_to(geometry.detector_origin,[batch,*np.shape(geometry.detector_origin)]),
+                                                    volume_spacing  =np.broadcast_to(geometry.volume_spacing,[batch,*np.shape(geometry.volume_spacing)]),
+                                                    detector_spacing=np.broadcast_to(geometry.detector_spacing,[batch,*np.shape(geometry.detector_spacing)]),
+                                                    ray_vectors     =np.broadcast_to(geometry.ray_vectors,[batch,*np.shape(geometry.ray_vectors)]))
 
 
 @ops.RegisterGradient("ParallelBackprojection2D")
@@ -43,15 +45,14 @@ def _backproject_grad(op, grad):
     '''
     proj = pyronn_layers.parallel_projection2d(
         volume=grad,
-        volume_shape=op.get_attr("volume_shape"),
-        projection_shape=op.get_attr("sinogram_shape"),
-        volume_origin=op.get_attr("volume_origin"),
-        detector_origin=op.get_attr("detector_origin"),
-        volume_spacing=op.get_attr("volume_spacing"),
-        detector_spacing=op.get_attr("detector_spacing"),
-        ray_vectors=op.get_attr("ray_vectors"),
+        projection_shape=op.inputs[0].shape[1:],
+        volume_origin=op.inputs[2],
+        detector_origin=op.inputs[3],
+        volume_spacing=op.inputs[4],
+        detector_spacing=op.inputs[5],
+        ray_vectors=op.inputs[6],
     )
-    return [proj]
+    return [proj, tf.stop_gradient(op.inputs[1]), tf.stop_gradient(op.inputs[2]), tf.stop_gradient(op.inputs[3]), tf.stop_gradient(op.inputs[4]), tf.stop_gradient(op.inputs[5]), tf.stop_gradient(op.inputs[6])]
 
 
 # fan_backprojection2d
@@ -64,16 +65,16 @@ def fan_backprojection2d(sinogram, geometry):
     Returns:
             Initialized lme_custom_ops.fan_backprojection2d layer.
     """
+    batch = np.shape(sinogram)[0]
     return pyronn_layers.fan_backprojection2d(sinogram,
-                                               sinogram_shape=geometry.sinogram_shape,
-                                               volume_shape=geometry.volume_shape,
-                                               volume_origin=geometry.tensor_proto_volume_origin,
-                                               detector_origin=geometry.tensor_proto_detector_origin,
-                                               volume_spacing=geometry.tensor_proto_volume_spacing,
-                                               detector_spacing=geometry.tensor_proto_detector_spacing,
-                                               source_2_isocenter_distance=geometry.source_isocenter_distance,
-                                               source_2_detector_distance=geometry.source_detector_distance,
-                                               central_ray_vectors=geometry.tensor_proto_central_ray_vectors)
+                                              volume_shape=geometry.volume_shape,
+                                              volume_origin=np.broadcast_to(geometry.volume_origin, [batch, *np.shape(geometry.volume_origin)]),
+                                              detector_origin=np.broadcast_to(geometry.detector_origin, [batch, *np.shape(geometry.detector_origin)]),
+                                              volume_spacing=np.broadcast_to(geometry.volume_spacing, [batch, *np.shape(geometry.volume_spacing)]),
+                                              detector_spacing=np.broadcast_to(geometry.detector_spacing, [batch, *np.shape(geometry.detector_spacing)]),
+                                              source_2_isocenter_distance=np.broadcast_to(geometry.source_isocenter_distance, [batch, *np.shape(geometry.source_isocenter_distance)]),
+                                              source_2_detector_distance=np.broadcast_to(geometry.source_detector_distance, [batch, *np.shape(geometry.source_detector_distance)]),
+                                              central_ray_vectors=np.broadcast_to(geometry.central_ray_vectors, [batch, *np.shape(geometry.central_ray_vectors)]))
 
 
 @ops.RegisterGradient("FanBackprojection2D")
@@ -83,14 +84,14 @@ def _backproject_grad(op, grad):
     '''
     proj = pyronn_layers.fan_projection2d(
         volume=grad,
-        volume_shape=op.get_attr("volume_shape"),
-        projection_shape=op.get_attr("sinogram_shape"),
-        volume_origin=op.get_attr("volume_origin"),
-        detector_origin=op.get_attr("detector_origin"),
-        volume_spacing=op.get_attr("volume_spacing"),
-        detector_spacing=op.get_attr("detector_spacing"),
-        source_2_isocenter_distance=op.get_attr("source_2_isocenter_distance"),
-        source_2_detector_distance=op.get_attr("source_2_detector_distance"),
-        central_ray_vectors=op.get_attr("central_ray_vectors"),
+        projection_shape=op.inputs[0].shape[1:],
+        volume_origin=op.inputs[2],
+        detector_origin=op.inputs[3],
+        volume_spacing=op.inputs[4],
+        detector_spacing=op.inputs[5],
+        source_2_isocenter_distance=op.inputs[6],
+        source_2_detector_distance=op.inputs[7],
+        central_ray_vectors=op.inputs[8],
     )
-    return [proj]
+    return [proj, tf.stop_gradient(op.inputs[1]),  tf.stop_gradient(op.inputs[2]),  tf.stop_gradient(op.inputs[3]), tf.stop_gradient(op.inputs[4]),
+            tf.stop_gradient(op.inputs[5]),  tf.stop_gradient(op.inputs[6]),  tf.stop_gradient(op.inputs[7]), tf.stop_gradient(op.inputs[8])]

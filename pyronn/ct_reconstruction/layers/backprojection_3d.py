@@ -14,7 +14,8 @@
 
 from tensorflow.python.framework import ops
 import pyronn_layers
-
+import numpy as np
+import tensorflow as tf
 
 # cone_backprojection3d
 def cone_backprojection3d(sinogram, geometry, hardware_interp=True):
@@ -27,15 +28,16 @@ def cone_backprojection3d(sinogram, geometry, hardware_interp=True):
     Returns:
             Initialized lme_custom_ops.cone_backprojection3d layer.
     """
+    batch = np.shape(sinogram)[0]
+    step_size=1.0
     return pyronn_layers.cone_backprojection3d(sinogram,
-                                                sinogram_shape=geometry.sinogram_shape,
-                                                volume_shape=geometry.volume_shape,
-                                                volume_origin=geometry.tensor_proto_volume_origin,
-                                                volume_spacing=geometry.tensor_proto_volume_spacing,
-                                                projection_multiplier=geometry.projection_multiplier,
-                                                projection_matrices=geometry.tensor_proto_projection_matrices,
-                                                hardware_interp=hardware_interp,
-                                                step_size = geometry.step_size)
+                                               volume_shape=geometry.volume_shape,
+                                               volume_origin=np.broadcast_to(geometry.volume_origin, [batch, *np.shape(geometry.volume_origin)]),
+                                               volume_spacing=np.broadcast_to(geometry.volume_spacing, [batch, *np.shape(geometry.volume_spacing)]),
+                                               projection_matrices=np.broadcast_to(geometry.projection_matrices, [batch, *np.shape(geometry.projection_matrices)]),
+                                               hardware_interp=hardware_interp,
+                                               step_size=np.broadcast_to(step_size, [batch, *np.shape(step_size)]),
+                                               projection_multiplier=np.broadcast_to(geometry.projection_multiplier, [batch, *np.shape(geometry.projection_multiplier)]))
 
 
 @ops.RegisterGradient("ConeBackprojection3D")
@@ -45,53 +47,13 @@ def _backproject_grad(op, grad):
     '''
     proj = pyronn_layers.cone_projection3d(
         volume=grad,
-        volume_shape=op.get_attr("volume_shape"),
-        projection_shape=op.get_attr("sinogram_shape"),
-        volume_origin=op.get_attr("volume_origin"),
-        volume_spacing=op.get_attr("volume_spacing"),
-        projection_matrices=op.get_attr("projection_matrices"),
+        projection_shape=op.inputs[0].shape[1:],
+        volume_origin=op.inputs[2],
+        volume_spacing=op.inputs[3],
+        projection_matrices=op.inputs[4],
         hardware_interp=op.get_attr("hardware_interp"),
-        step_size=op.get_attr("step_size"),
-        projection_multiplier=op.get_attr("projection_multiplier")
+        step_size=op.inputs[5],
+        projection_multiplier=op.inputs[6],
     )
-    return [proj]
+    return [proj, tf.stop_gradient(op.inputs[1]), tf.stop_gradient(op.inputs[2]), tf.stop_gradient(op.inputs[3]), tf.stop_gradient(op.inputs[4]), tf.stop_gradient(op.inputs[5]), tf.stop_gradient(op.inputs[6])]
 
-
-
-# parallel_backprojection3d
-def par_backprojection3d(sinogram, geometry, hardware_interp=True):
-    """
-    Wrapper function for making the layer call.
-    Args:
-        volume:             Input volume to project.
-        geometry:           Corresponding GeometryCone3D Object defining parameters.
-        hardware_interp:    Controls if interpolation is done by GPU
-    Returns:
-            Initialized lme_custom_ops.cone_backprojection3d layer.
-    """
-    return pyronn_layers.parallel_backprojection3d(sinogram,
-                                                sinogram_shape=geometry.sinogram_shape,
-                                                volume_shape=geometry.volume_shape,
-                                                volume_origin=geometry.tensor_proto_volume_origin,
-                                                volume_spacing=geometry.tensor_proto_volume_spacing,
-                                                detector_origin=geometry.tensor_proto_detector_origin,
-                                                detector_spacing=geometry.tensor_proto_detector_spacing,
-                                                ray_vectors=geometry.tensor_proto_ray_vectors)
-
-
-@ops.RegisterGradient("ParallelBackprojection3D")
-def _backproject_grad(op, grad):
-    '''
-        Compute the gradient of the backprojector op by invoking the forward projector.
-    '''
-    proj = pyronn_layers.parallel_projection3d(
-        volume=grad,
-        volume_shape=op.get_attr("volume_shape"),
-        projection_shape=op.get_attr("sinogram_shape"),
-        volume_origin=op.get_attr("volume_origin"),
-        volume_spacing=op.get_attr("volume_spacing"),
-        detector_origin=op.get_attr("detector_origin"),
-        detector_spacing=op.get_attr("detector_spacing"),
-        ray_vectors=op.get_attr("ray_vectors"),
-    )
-    return [proj]
