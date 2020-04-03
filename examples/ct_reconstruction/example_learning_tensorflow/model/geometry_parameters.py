@@ -32,4 +32,4 @@ angular_range         = np.pi
 
 # Create Geometry class instance
 GEOMETRY = GeometryParallel2D(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_projections, angular_range)
-GEOMETRY.set_ray_vectors(circular_trajectory.circular_trajectory_2d(GEOMETRY))
+GEOMETRY.set_trajectory(circular_trajectory.circular_trajectory_2d(GEOMETRY))

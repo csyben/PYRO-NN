@@ -25,26 +25,23 @@ data_val, label_val = generate_validation_data(args.NUM_VALIDATION_SAMPLES)
 data_test, label_test = get_test_data(args.NUM_TEST_SAMPLES)
 data_cupping, label_cupping = get_test_cupping_data()
 
-# Session
-config = tf.ConfigProto()
-config.gpu_options.per_process_gpu_memory_fraction = 0.5
-config.gpu_options.allow_growth = True
-with tf.Session(config=config) as sess:
-    training = pipeline(sess)
-    training.train(data,label,data_val,label_val)
 
-    #Get
-    initial_filter = training.results.get('initial_filter')
-    learned_filter = training.results.get('learned_filter')
-    ram_lak_filter = ram_lak(GEOMETRY.detector_shape, GEOMETRY.detector_spacing)
+training = pipeline()
+training.train(data,label,data_val,label_val)
 
-    result_test_initial, rti_avg_loss = training.forward(data_test, label_test, initial_filter)
-    result_test_ram_lak, rtrl_avg_loss = training.forward(data_test, label_test, ram_lak_filter)
-    result_test_learned, rtl_avg_loss = training.forward(data_test, label_test, learned_filter)
+#Get
+initial_filter = training.results.get('initial_filter')
+learned_filter = training.results.get('learned_filter')
+ram_lak_filter = ram_lak(GEOMETRY.detector_shape, GEOMETRY.detector_spacing)
 
-    result_cupping_test_initial, rcti_avg_loss = training.forward(data_cupping, label_cupping, initial_filter)
-    result_cupping_test_ram_lak, rctrl_avg_loss = training.forward(data_cupping, label_cupping, ram_lak_filter)
-    result_cupping_test_learned, rctl_avg_loss = training.forward(data_cupping, label_cupping, learned_filter)
+
+result_test_initial = training.forward(data_test, label_test, initial_filter)
+result_test_ram_lak = training.forward(data_test, label_test, ram_lak_filter)
+result_test_learned = training.forward(data_test, label_test, learned_filter)
+#
+result_cupping_test_initial = training.forward(data_cupping, label_cupping, initial_filter)
+result_cupping_test_ram_lak = training.forward(data_cupping, label_cupping, ram_lak_filter)
+result_cupping_test_learned = training.forward(data_cupping, label_cupping, learned_filter)
 
 
 evaluation.evaluation_filter(initial_filter, ram_lak_filter, learned_filter, 'plots/filter.pdf')

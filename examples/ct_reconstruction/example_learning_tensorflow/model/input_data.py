@@ -32,10 +32,10 @@ def generate_training_data():
         phantom = np.expand_dims( primitives_2d.circle(GEOMETRY.volume_shape, center_pos, n), axis = 0)
         label_list.append(phantom)
     #Create sinogram data
-    with tf.Session() as sess:
-        for phantom in label_list:
-            sinogram = generate_sinogram_parallel_2d(phantom, GEOMETRY)
-            input_data_list.append(sinogram)
+
+    for phantom in label_list:
+        sinogram = generate_sinogram_parallel_2d(phantom, GEOMETRY)
+        input_data_list.append(sinogram.numpy())
     #Remove batch dimension
     return np.squeeze(np.asarray(input_data_list)), np.squeeze(np.asarray(label_list))
 
@@ -43,55 +43,50 @@ def generate_validation_data(number_of_samples):
 
     growth_rate = np.min(GEOMETRY.volume_shape) / number_of_samples / 2
 
-    data   = np.empty((number_of_samples,) + tuple(GEOMETRY.sinogram_shape))
-    labels = np.empty((number_of_samples,) + tuple(GEOMETRY.volume_shape))
+    data   = np.empty((number_of_samples,) + tuple(GEOMETRY.sinogram_shape),dtype=np.float32)
+    labels = np.empty((number_of_samples,) + tuple(GEOMETRY.volume_shape),dtype=np.float32)
 
-    with tf.Session() as sess:
+    # build growing rectangles
+    for i in range(number_of_samples):
+        size   = np.array([growth_rate * (i+1), growth_rate * (i+1)], dtype=np.int32)
+        pos    = GEOMETRY.volume_shape//2 - size//2 # middle
+        value  = np.random.uniform(0.01, 1.0)
+        labels[i] = primitives_2d.rect(GEOMETRY.volume_shape, pos, size, value)
 
-        # build growing rectangles
-        for i in range(number_of_samples):
-            size   = np.array([growth_rate * (i+1), growth_rate * (i+1)], dtype=np.int32)
-            pos    = GEOMETRY.volume_shape//2 - size//2 # middle
-            value  = np.random.uniform(0.01, 1.0)
-            labels[i] = primitives_2d.rect(GEOMETRY.volume_shape, pos, size, value)
-
-            # project it
-            data[i] = generate_sinogram_parallel_2d(np.expand_dims(labels[i],axis=0), GEOMETRY)
+        # project it
+        data[i] = generate_sinogram_parallel_2d(np.expand_dims(labels[i],axis=0), GEOMETRY).numpy()
 
     return data, labels
 
 
 def get_test_data(number_of_samples=1):
 
-    data   = np.empty((number_of_samples,) + tuple(GEOMETRY.sinogram_shape))
-    labels = np.empty((number_of_samples,) + tuple(GEOMETRY.volume_shape))
+    data   = np.empty((number_of_samples,) + tuple(GEOMETRY.sinogram_shape),dtype=np.float32)
+    labels = np.empty((number_of_samples,) + tuple(GEOMETRY.volume_shape),dtype=np.float32)
 
-    with tf.Session() as sess:
+    # get shepp logan 2d
+    if number_of_samples == 1:
+         labels[0] = shepp_logan.shepp_logan_enhanced(GEOMETRY.volume_shape)
+         data[0] = generate_sinogram(np.expand_dims(labels[0],axis=0), parallel_projection2d, GEOMETRY)
 
-        # get shepp logan 2d
-        if number_of_samples == 1:
-             labels[0] = shepp_logan.shepp_logan_enhanced(GEOMETRY.volume_shape)
-             data[0] = generate_sinogram(np.expand_dims(labels[0],axis=0), parallel_projection2d, GEOMETRY)
-
-        # every slice of shepp logan 3d with number_of_samples as Z-dimension as own image
-        else:
-            labels = shepp_logan.shepp_logan_3d((number_of_samples,) + tuple(GEOMETRY.sinogram_shape))
-            for i in range(number_of_samples):
-                data[i] = generate_sinogram_parallel_2d(np.expand_dims(labels[i], axis=0), GEOMETRY)
+    # every slice of shepp logan 3d with number_of_samples as Z-dimension as own image
+    else:
+        labels = shepp_logan.shepp_logan_3d((number_of_samples,) + tuple(GEOMETRY.sinogram_shape))
+        for i in range(number_of_samples):
+            data[i] = generate_sinogram_parallel_2d(np.expand_dims(labels[i], axis=0), GEOMETRY)
 
     return data, labels
 
 
 def get_test_cupping_data():
 
-    data = np.empty((1,) + tuple(GEOMETRY.sinogram_shape))
-    labels = np.empty((1,) + tuple(GEOMETRY.volume_shape))
+    data = np.empty((1,) + tuple(GEOMETRY.sinogram_shape),dtype=np.float32)
+    labels = np.empty((1,) + tuple(GEOMETRY.volume_shape),dtype=np.float32)
 
-    with tf.Session() as sess:
-         labels[0] = primitives_2d.circle(GEOMETRY.volume_shape,
-                                          GEOMETRY.volume_shape//2,
-                                          np.min(GEOMETRY.volume_shape//2))
-         data[0] = generate_sinogram_parallel_2d(np.expand_dims(labels[0], axis=0), GEOMETRY)
+    labels[0] = primitives_2d.circle(GEOMETRY.volume_shape,
+                                  GEOMETRY.volume_shape//2,
+                                  np.min(GEOMETRY.volume_shape//2))
+    data[0] = generate_sinogram_parallel_2d(np.expand_dims(labels[0], axis=0), GEOMETRY)
 
 
     return data, labels

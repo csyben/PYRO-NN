@@ -17,17 +17,17 @@ import tensorflow as tf
 from .geometry_parameters import GEOMETRY
 from pyronn.ct_reconstruction.helpers.filters.filters import ramp
 from pyronn.ct_reconstruction.layers.backprojection_2d import parallel_backprojection2d
+from tensorflow.keras import Model
 
-class filter_model:
+class filter_model(Model):
     """
             Here the model in terms of Tensorflow layers is defined.
         """
 
     def __init__(self):
+        super(filter_model, self).__init__()
         filter = ramp(GEOMETRY.detector_shape[0])
-        self.filter_weights = tf.get_variable(name='filter_frequency', dtype=tf.float32, initializer=filter, trainable=True)  # init as ramp filter
-        self.filter_weights_placeholder = tf.placeholder(tf.float32, name='filter_weights_placeholder')
-        self.set_filter_weights = self.filter_weights.assign(self.filter_weights_placeholder)
+        self.filter_weights = tf.Variable(name='filter_frequency', dtype=tf.float32, initial_value=filter, trainable=True)  # init as ramp filter
 
 
     def get_filter(self, sess):
@@ -36,7 +36,7 @@ class filter_model:
     def set_filter(self, sess, filter_weights):
         sess.run(self.set_filter_weights, feed_dict={self.filter_weights_placeholder: filter_weights})
 
-    def forward(self, input_sinogram):
+    def call(self, x):
         """
                 Sets up the network architecture.
 
@@ -46,13 +46,9 @@ class filter_model:
                 Returns:
                 backprojection_layer: The last layer before the loss layer.
                 """
-        sinogram_frequency = tf.fft(tf.cast(input_sinogram,dtype=tf.complex64))
+        sinogram_frequency = tf.signal.fft(tf.cast(x,dtype=tf.complex64))
         filtered_sinogram_frequency = tf.multiply(sinogram_frequency, tf.cast(self.filter_weights,dtype=tf.complex64))
-        filtered_sinogram = tf.real(tf.ifft(filtered_sinogram_frequency))
+        filtered_sinogram = tf.math.real(tf.signal.ifft(filtered_sinogram_frequency))
         reco = parallel_backprojection2d(filtered_sinogram, GEOMETRY)
         #tf.nn.relu(reco)
-        return reco, self.filter_weights
-
-    def l2_loss(self, predictions, gt_labels):
-        self.loss = tf.reduce_sum(tf.squared_difference(predictions, gt_labels))
-        return self.loss
+        return reco
