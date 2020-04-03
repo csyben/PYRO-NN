@@ -45,31 +45,40 @@ def example_cone_3d():
 
     # create Geometry class
     geometry = GeometryCone3D(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_projections, angular_range, source_detector_distance, source_isocenter_distance)
-    geometry.set_projection_matrices(circular_trajectory.circular_trajectory_3d(geometry))
+    geometry.set_trajectory(circular_trajectory.circular_trajectory_3d(geometry))
 
     # Get Phantom 3d
     phantom = shepp_logan.shepp_logan_3d(volume_shape)
+    # Add required batch dimension
     phantom = np.expand_dims(phantom, axis=0)
 
-    config = tf.ConfigProto()
-    config.gpu_options.per_process_gpu_memory_fraction = 0.5
-    config.gpu_options.allow_growth = True
     # ------------------ Call Layers ------------------
-    with tf.Session(config = config) as sess:
-        result = cone_projection3d(phantom, geometry)
-        sinogram = result.eval()
+    # The following code is the new TF2.0 experimental way to tell
+    # Tensorflow only to allocate GPU memory needed rather then allocate every GPU memory available.
+    # This is important for the use of the hardware interpolation projector, otherwise there might be not enough memory left
+    # to allocate the texture memory on the GPU
 
-        filter = ram_lak_3D(geometry)
-        sino_freq = np.fft.fft(sinogram, axis=-1)
-        filtered_sino_freq = sino_freq * filter
-        filtered_sino = np.fft.ifft(filtered_sino_freq, axis=-1)
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    if gpus:
+        try:
+            for gpu in gpus:
+                tf.config.experimental.set_memory_growth(gpu, True)
+        except RunetimeError as e:
+            print(e)
 
-        result_back_proj = cone_backprojection3d(filtered_sino, geometry)
-        reco = result_back_proj.eval()
-        plt.figure()
-        plt.imshow(np.squeeze(reco)[volume_shape[0]//2], cmap=plt.get_cmap('gist_gray'))
-        plt.axis('off')
-        plt.savefig('3d_cone_reco.png', dpi=150, transparent=False, bbox_inches='tight')
+    sinogram = cone_projection3d(phantom, geometry)
+
+    reco_filter = ram_lak_3D(geometry)
+    sino_freq = tf.signal.fft(tf.cast(sinogram,dtype=tf.complex64))
+    sino_filtered_freq = tf.multiply(sino_freq,tf.cast(reco_filter,dtype=tf.complex64))
+    sinogram_filtered = tf.math.real(tf.signal.ifft(sino_filtered_freq))
+
+    reco = cone_backprojection3d(sinogram_filtered, geometry)
+
+    plt.figure()
+    plt.imshow(np.squeeze(reco)[volume_shape[0]//2], cmap=plt.get_cmap('gist_gray'))
+    plt.axis('off')
+    plt.savefig('3d_cone_reco.png', dpi=150, transparent=False, bbox_inches='tight')
 
 
 if __name__ == '__main__':

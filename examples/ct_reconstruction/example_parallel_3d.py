@@ -57,7 +57,7 @@ def example_parallel_3d():
 
     # create Geometry class
     geometry = GeometryParallel3D(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_projections, angular_range)
-    geometry.set_ray_vectors(circular_trajectory_3d(geometry))
+    geometry.set_trajectory(circular_trajectory_3d(geometry))
 
     # Get Phantom
     phantom = shepp_logan.shepp_logan_3d(volume_shape)

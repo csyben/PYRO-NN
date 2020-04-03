@@ -46,31 +46,30 @@ def example_fan_2d():
 
     # create Geometry class
     geometry = GeometryFan2D(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_projections, angular_range, source_detector_distance, source_isocenter_distance)
-    geometry.set_central_ray_vectors(circular_trajectory.circular_trajectory_2d(geometry))
+    geometry.set_trajectory(circular_trajectory.circular_trajectory_2d(geometry))
 
     # Get Phantom
     phantom = shepp_logan.shepp_logan_enhanced(volume_shape)
+    # Add required batch dimension
     phantom = np.expand_dims(phantom,axis=0)
     # ------------------ Call Layers ------------------
-    with tf.Session() as sess:
-        result = fan_projection2d(phantom, geometry)
-        sinogram = result.eval()
 
-        #TODO: Add Cosine weighting
-        #TODO: Add redundancy weighting for 360 degree
+    sinogram = fan_projection2d(phantom, geometry)
 
-        reco_filter = filters.ramp_2D(geometry)
+    #TODO: Add Cosine weighting
+    #TODO: Add redundancy weighting for 360 degree
 
-        sino_freq = np.fft.fft(sinogram, axis=-1)
-        sino_filtered_freq = np.multiply(sino_freq, reco_filter)
-        sinogram_filtered = np.fft.ifft(sino_filtered_freq, axis=-1)
+    reco_filter = filters.ramp_2D(geometry)
+    sino_freq = tf.signal.fft(tf.cast(sinogram,dtype=tf.complex64))
+    sino_filtered_freq = tf.multiply(sino_freq,tf.cast(reco_filter,dtype=tf.complex64))
+    sinogram_filtered = tf.math.real(tf.signal.ifft(sino_filtered_freq))
 
-        result_back_proj = fan_backprojection2d(sinogram_filtered, geometry)
-        reco = result_back_proj.eval()
-        plt.figure()
-        plt.imshow(np.squeeze(reco), cmap=plt.get_cmap('gist_gray'))
-        plt.axis('off')
-        plt.savefig('2d_fan_reco.png', dpi=150, transparent=False, bbox_inches='tight')
+    reco = fan_backprojection2d(sinogram_filtered, geometry)
+
+    plt.figure()
+    plt.imshow(np.squeeze(reco), cmap=plt.get_cmap('gist_gray'))
+    plt.axis('off')
+    plt.savefig('2d_fan_reco.png', dpi=150, transparent=False, bbox_inches='tight')
 
 
 if __name__ == '__main__':

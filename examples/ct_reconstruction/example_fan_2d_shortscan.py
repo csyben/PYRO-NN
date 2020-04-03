@@ -47,36 +47,33 @@ def example_fan_2d_shortscan():
                              source_detector_distance, source_isocenter_distance)
     
     geometry.angular_range =  np.pi + 2*geometry.fan_angle # fan_angle gets defined by sdd and detector_shape
-    geometry.central_ray_vectors = circular_trajectory_2d(geometry)
+    geometry.set_trajectory(circular_trajectory_2d(geometry))
 
     # Create Phantom
     phantom = shepp_logan_enhanced(volume_shape)
+    # Add required batch dimension
     phantom = np.expand_dims(phantom,axis=0)
     # Build up Reconstruction Pipeline
-    with tf.Session() as sess:
 
-        # Create Sinogram of Phantom
-        result = fan_projection2d(phantom, geometry)
-        sinogram = result.eval()
+    # Create Sinogram of Phantom
+    sinogram = fan_projection2d(phantom, geometry)
 
-        # Redundancy Weighting: Create Weights Image and pointwise multiply
-        redundancy_weights = weights.parker_weights_2d(geometry)
-        sinogram_redun_weighted = sinogram * redundancy_weights
+    # Redundancy Weighting: Create Weights Image and pointwise multiply
+    redundancy_weights = weights.parker_weights_2d(geometry)
+    sinogram_redun_weighted = sinogram * redundancy_weights
 
-        # Filtering: Create 2D Filter and pointwise multiply
-        the_filter = filters.ram_lak_2D(geometry)
-        sino_fft = np.fft.fft(sinogram_redun_weighted, axis=-1)
-        sino_filtered_fft = np.multiply(sino_fft, the_filter)
-        sinogram_filtered = np.fft.ifft(sino_filtered_fft, axis=-1)
+    # Filtering: Create 2D Filter and pointwise multiply
+    reco_filter = filters.ram_lak_2D(geometry)
+    sino_freq = tf.signal.fft(tf.cast(sinogram_redun_weighted,dtype=tf.complex64))
+    sino_filtered_freq = tf.multiply(sino_freq,tf.cast(reco_filter,dtype=tf.complex64))
+    sinogram_filtered = tf.math.real(tf.signal.ifft(sino_filtered_freq))
+    # Final Backprojection
+    reco = fan_backprojection2d(sinogram_filtered, geometry)
 
-        # Final Backprojection
-        result_back_proj = fan_backprojection2d(sinogram_filtered, geometry)
-        reco = result_back_proj.eval()
-
-        plt.figure()
-        plt.imshow(np.squeeze(reco), cmap=plt.get_cmap('gist_gray'))
-        plt.axis('off')
-        plt.savefig('2d_fan_short_scan_reco.png', dpi=150, transparent=False, bbox_inches='tight')
+    plt.figure()
+    plt.imshow(np.squeeze(reco), cmap=plt.get_cmap('gist_gray'))
+    plt.axis('off')
+    plt.savefig('2d_fan_short_scan_reco.png', dpi=150, transparent=False, bbox_inches='tight')
 
 
 if __name__ == '__main__':

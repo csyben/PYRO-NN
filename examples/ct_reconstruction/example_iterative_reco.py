@@ -16,12 +16,13 @@ import numpy as np
 import tensorflow as tf
 import argparse
 import matplotlib.pyplot as plt
+from tensorflow.keras import Model
 
-from pyronn.ct_reconstruction.geometry.geometry_cone_3d import GeometryCone3D
+from pyronn.ct_reconstruction.geometry.geometry_parallel_2d import GeometryParallel2D
 from pyronn.ct_reconstruction.helpers.trajectories import circular_trajectory
 from pyronn.ct_reconstruction.helpers.phantoms import shepp_logan
 from pyronn.ct_reconstruction.helpers.misc.generate_sinogram import generate_sinogram
-from pyronn.ct_reconstruction.layers import projection_3d
+from pyronn.ct_reconstruction.layers import projection_2d
 
 
 def iterative_reconstruction():
@@ -29,44 +30,42 @@ def iterative_reconstruction():
 
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('--lr', dest='learning_rate', type=float, default=1e-2, help='initial learning rate for adam')
-    parser.add_argument('--epoch', dest='num_epochs', type=int, default=1000000, help='# of epoch')
+    parser.add_argument('--epoch', dest='num_epochs', type=int, default=100000, help='# of epoch')
     args = parser.parse_args()
 
     # Volume Parameters:
-    volume_size = 64
-    volume_shape = [volume_size, volume_size, volume_size]
-    volume_spacing = [1,1,1]
+    volume_size = 256
+    volume_shape = [volume_size-1, volume_size]#, volume_size+1]
+    volume_spacing = [1,1]#, 1]
 
     # Detector Parameters:
-    detector_shape = [150,150]
-    detector_spacing = [1,1]
+    detector_shape = [375]#, 375]
+    detector_spacing = [1]#,1]
 
     # Trajectory Parameters:
     number_of_projections = 30
     angular_range = np.radians(200)  # 200 * np.pi / 180
 
     # create Geometry class
-    geometry = GeometryCone3D(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_projections, angular_range, 1200.0, 750.0 )
-    rays = circular_trajectory.circular_trajectory_3d(geometry)
-    # geometry.set_ray_vectors(np.concatenate([rays, np.zeros((30,1))], axis=-1))
-    geometry.set_projection_matrices(rays)
-    phantom = shepp_logan.shepp_logan_enhanced(volume_shape)
+    geometry = GeometryParallel2D(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_projections, angular_range)#, 1200.0, 750.0 )
+    matrices = circular_trajectory.circular_trajectory_2d(geometry)
+
+    geometry.set_trajectory(matrices)
+    phantom = shepp_logan.shepp_logan_enhanced(volume_shape).astype(dtype=np.float32)
+    # Add required batch dimension
     phantom = np.expand_dims(phantom,axis=0)
 
-    config = tf.ConfigProto()
-    config.gpu_options.per_process_gpu_memory_fraction = 0.5
-    config.gpu_options.allow_growth = True
     # ------------------ Call Layers ------------------
-    with tf.Session(config=config) as sess:
-        acquired_sinogram = generate_sinogram(phantom,projection_3d.cone_projection3d,geometry)
 
-        # acquired_sinogram = acquired_sinogram + np.random.normal(
-        #     loc=np.mean(np.abs(acquired_sinogram)), scale=np.std(acquired_sinogram), size=acquired_sinogram.shape) * 0.02
+    acquired_sinogram = generate_sinogram(phantom,projection_2d.parallel_projection2d,geometry)
 
-        zero_vector = np.zeros(np.shape(phantom), dtype=np.float32)
+    # acquired_sinogram = acquired_sinogram + np.random.normal(
+    #     loc=np.mean(np.abs(acquired_sinogram)), scale=np.std(acquired_sinogram), size=acquired_sinogram.shape) * 0.02
 
-        iter_pipeline = pipeline(sess, args, geometry)
-        iter_pipeline.train(zero_vector,np.asarray(acquired_sinogram))
+    zero_vector = np.zeros(np.shape(phantom), dtype=np.float32)
+
+    iter_pipeline = pipeline(args, geometry)
+    iter_pipeline.train(zero_vector,np.asarray(acquired_sinogram))
 
     plt.figure()
     plt.imshow(np.squeeze(iter_pipeline.result), cmap=plt.get_cmap('gist_gray'))
@@ -78,88 +77,68 @@ def iterative_reconstruction():
 
 class pipeline(object):
 
-    def __init__(self, session, args, geometry):
+    def __init__(self, args, geometry):
         self.args = args
-        self.sess = session
         self.geometry = geometry
         self.model = iterative_reco_model(geometry, np.zeros(geometry.volume_shape, dtype=np.float32))
-        self.regularizer_weight = 0.5
+        self.regularizer_weight = 0.0001
+        self.learning_rate = tf.Variable(name='learning_rate', dtype=tf.float32, initial_value= self.args.learning_rate, trainable=False)
+        self.optimizer = tf.keras.optimizers.Adam(self.learning_rate)
 
-    def init_placeholder_graph(self):
-        self.learning_rate = tf.get_variable(name='learning_rate', dtype=tf.float32, initializer=tf.constant(0.0001), trainable=False)
-        self.learning_rate_placeholder = tf.placeholder(tf.float32, name='learning_rate_placeholder')
-        self.set_learning_rate = self.learning_rate.assign(self.learning_rate_placeholder)
-
-
-    def build_graph(self, input_type, input_shape, label_shape):
-
-        self.init_placeholder_graph()
-        g_opt = tf.train.AdamOptimizer(self.learning_rate)
-
-        # Tensor placeholders that are initialized later. Input and label shape are assumed to be equal
-        self.input_placeholder = tf.placeholder(input_type, (None, input_shape[1], input_shape[2], input_shape[3]))
-        self.label_placeholder = tf.placeholder(input_type, (None, label_shape[1], label_shape[2], label_shape[3]))
-
-        # Make pairs of elements. (X, Y) => ((x0, y0), (x1)(y1)),....
-        image_set = tf.data.Dataset.from_tensor_slices((self.input_placeholder, self.label_placeholder))
-        # Identity mapping operation is needed to include multi-tthreaded queue buffering.
-        image_set = image_set.map(lambda x, y: (x, y), num_parallel_calls=4).prefetch(buffer_size=200)
-        # Batch dataset. Also do this if batchsize==1 to add the mandatory first axis for the batch_size
-        image_set = image_set.batch(1)
-        # Repeat dataset for number of epochs
-        image_set = image_set.repeat(self.args.num_epochs + 1)
-        # Select iterator
-        self.iterator = image_set.make_initializable_iterator()
-
-        self.input_element, self.label_element  = self.iterator.get_next()
-
-        self.current_sino, self.current_reco = self.model.model(self.input_element)
-
-        tv_loss_x = tf.image.total_variation(tf.transpose(self.current_reco))
-        tv_loss_y = tf.image.total_variation(self.current_reco)
-
-        self.loss = tf.reduce_sum(tf.reduce_sum(tf.squared_difference(self.label_element, self.current_sino)) + self.regularizer_weight*(tv_loss_x+tv_loss_y))
-        self.train_op = g_opt.minimize(self.loss)
+    # @tf.function
+    def loss(self, prediction, label, regularizer = False):
+        mse = tf.keras.losses.mse(prediction, label)
+        tv_loss = 0
+        if regularizer:
+            tv_loss = tf.image.total_variation(prediction)
+        return tf.reduce_sum(tf.reduce_sum( mse ) + self.regularizer_weight * tv_loss)
+    # @tf.function
+    def train_step(self, input, label):
+        with tf.GradientTape() as tape:
+            # tape.watch(self.model.reco)
+            predictions, current_reco = self.model(input)
+            self.loss_v = self.loss(predictions, label, False)
+            gradients = tape.gradient(self.loss_v , self.model.trainable_variables)
+        # print('loss: ',self.loss_v.numpy())
+        self.optimizer.apply_gradients(zip(gradients, self.model.variables))
 
 
     def train(self, zero_vector, acquired_sinogram):
-        self.build_graph(zero_vector.dtype, zero_vector.shape, acquired_sinogram.shape)
+        import pyconrad as pyc
+        pyc.setup_pyconrad()
+        self.data_iterator = tf.data.Dataset.from_tensor_slices((zero_vector, acquired_sinogram)).batch(1)
 
-        self.sess.run(tf.global_variables_initializer())
-        self.sess.run(tf.local_variables_initializer())
-
-        learning_rate = self.args.learning_rate
-
-        # initialise iterator with train data
-        self.sess.run(self.iterator.initializer, feed_dict={self.input_placeholder: zero_vector, self.label_placeholder: acquired_sinogram})
-
-        min_loss = 10000000000000000
-        for epoch in range(1, self.args.num_epochs + 1):
-
-            _ = self.sess.run([self.set_learning_rate], feed_dict={self.learning_rate_placeholder: learning_rate})
-
-            _, loss, current_sino, current_reco, label = self.sess.run([self.train_op, self.loss, self.current_sino, self.current_reco, self.label_element])
-
-            if loss > min_loss * 1.005:
+        last_loss = 100000000
+        for epoch in range(self.args.num_epochs):
+            for images, labels in self.data_iterator:
+                self.train_step(images, labels)
+            if epoch % 25 is 0:
+                pyc.imshow(self.model.reco.numpy(), 'reco')
+            if epoch % 100 is 0:
+                template = 'Epoch {}, Loss: {}'
+                print(template.format(epoch, self.loss_v.numpy()))
+            if self.loss_v.numpy() > last_loss*1.03:
+                print('break at epoch', epoch)
                 break
-            if epoch % 50 is 0:
-                print('Epoch: %d' % epoch)
-                print('Loss %f' % loss)
-            if min_loss > loss:
-                min_loss = loss
-                self.result = current_reco
+            last_loss = self.loss_v.numpy()
 
-class iterative_reco_model:
+        print('training finished')
+        self.result = self.model.reco.numpy()
+
+
+
+class iterative_reco_model(Model):
 
     def __init__(self, geometry, reco_initialization):
+        super(iterative_reco_model, self).__init__()
         self.geometry = geometry
-        self.reco = tf.get_variable(name='reco', dtype=tf.float32,
-                                    initializer=tf.expand_dims(reco_initialization, axis=0),
+        self.reco = tf.Variable(name='reco', dtype=tf.float32,
+                                    initial_value=tf.expand_dims(reco_initialization, axis=0),
                                     trainable=True, constraint=lambda x: tf.clip_by_value(x, 0, np.infty))
 
-    def model(self, input_volume):
-        self.updated_reco = tf.add(input_volume, self.reco)
-        self.current_sino = projection_3d.cone_projection3d(self.updated_reco, self.geometry)
+    def call(self, x):
+        self.updated_reco = tf.add(x, self.reco)
+        self.current_sino = projection_2d.parallel_projection2d(self.updated_reco, self.geometry)
         return self.current_sino, self.reco
 
 
