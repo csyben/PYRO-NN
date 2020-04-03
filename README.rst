@@ -27,6 +27,16 @@ If you find this helpful, we would kindly ask you to reference our article publi
    journal = {Medical Physics},
    }
 
+Update
+=========
+With the new pyronn 0.1.0 Tensorflow 2.x will be supported. The default mode for pyronn is eager execution like Tensorflow itself.
+Major features in the update are:
+- Tensorflow 2.x support
+    - Eager execution for all pyronn_layers
+    - Keras support
+- Batch size support for all pyronn_layers
+- The pyronn_layers wheel is now a dependency and will be installed from pip repositories
+
 Planned
 =========
 The support for Tensorflow 2.0 is planned. A development branch is currently planned for november 2019. For the update following steps need to be made:
@@ -98,7 +108,7 @@ The trajectory can be calculated and set as follows:
 
     from pyronn.ct_reconstruction.helpers.trajectories import circular_trajectory
 
-    par_geometry.set_central_ray_vectors(circular_trajectory.circular_trajectory_2d(par_geometry))
+    par_geometry.set_trajectory(circular_trajectory.circular_trajectory_2d(par_geometry))
 
 At this point the geometry is fully setup and can be used to create projections and reconstructions.
 The Layers just takes the respective input tensor and the geometry object to conduct the projection, reconstruction respectively.
@@ -147,17 +157,17 @@ memory outside of the Tensorflow context, which can easily lead to out of memory
 
 There exist two ways of dealing with this problem:
 
-1. A convenient way is to reduce the initially allocated memory by Tensorflow itself and allow a memory growth. We suggest to always use this mechanism
-to minimize the occurrence of out of memory errors:
+1. With the new pyronn version of 0.1.0 pyronn will automatically set memory growth true for Tensorflow to true. The following code allows the memory growth:
 
 .. code-block:: python
 
-    config = tf.ConfigProto()
-    config.gpu_options.per_process_gpu_memory_fraction = 0.5
-    config.gpu_options.allow_growth = True
-    # ------------------ Call Layers ------------------
-    with tf.Session(config=config) as sess:
-        ...
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+        if gpus:
+            try:
+                for gpu in gpus:
+                    tf.config.experimental.set_memory_growth(gpu, True)
+            except RunetimeError as e:
+                print(e)
 
 2. The memory consuming operators like 3D cone-beam projection and back-projection have a so called hardware_interp flag. This means that the
 interpolation for both operators are either done by the CUDA texture or based on software interpolation. To use the CUDA texture,
