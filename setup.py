@@ -18,12 +18,18 @@ limitations under the License.
 """
 import setuptools
 
+__version__ = '0.1.0'
+# REQUIRED_PACKAGES = [
+#     'numpy',
+#     'pyronn_layers'
+# ]
+
 with open("README.rst", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="pyronn",
-    version="0.0.6",
+    version=__version__,
     author="Christopher Syben",
     author_email="christopher.syben@fau.de",
     description="PYRO-NN is the high level Python API to the PYRO-NN-Layers known operators.",
