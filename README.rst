@@ -150,7 +150,7 @@ memory outside of the Tensorflow context, which can easily lead to out of memory
 
 There exist two ways of dealing with this problem:
 
-1. With the new pyronn version of 0.1.0 pyronn will automatically set memory growth true for Tensorflow to true. The following code allows the memory growth:
+1. With the new pyronn version of 0.1.0 pyronn will automatically set memory growth for Tensorflow to true. The following code allows the memory growth:
 
 .. code-block:: python
 
