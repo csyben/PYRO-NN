@@ -1,7 +1,7 @@
 __author__ = "Christopher Syben <christopher.syben@fau.de>"
 __copyright__ = "Christopher Syben <christopher.syben@fau.de>"
 __license__ = """
-PYRO-NN, python framework for convenient use of the ct reconstructions algorithms provided within Tensorflow
+PYRO-NN, python framework for convenient use of the ct reconstructions algorithms
 Copyright [2019] [Christopher Syben]
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,7 @@ limitations under the License.
 """
 import setuptools
 
-__version__ = '0.1.0'
+__version__ = '0.1.0.1'
 # REQUIRED_PACKAGES = [
 #     'numpy',
 #     'pyronn_layers'
@@ -37,6 +37,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/csyben/PYRO-NN",
     packages=setuptools.find_packages(),
+    install_requires=['numpy', 'pyronn-layers>=0.1.0'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Apache Software License",
