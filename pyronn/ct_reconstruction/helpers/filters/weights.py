@@ -17,11 +17,11 @@ import numpy as np
 
 # 3d cosine weights
 def cosine_weights_3d(geometry):
-    cu = (geometry.detector_shape[1] - 1) / 2 * geometry.detector_spacing[1]
-    cv = (geometry.detector_shape[0] - 1) / 2 * geometry.detector_spacing[0]
+    cu = -(geometry.detector_shape[1] - 1) / 2 * geometry.detector_spacing[1]
+    cv = -(geometry.detector_shape[0] - 1) / 2 * geometry.detector_spacing[0]
     sd2 = geometry.source_detector_distance ** 2
 
-    w = np.zeros((geometry.detector_shape[1], geometry.detector_shape[0]), dtype=np.float32)
+    w = np.zeros((geometry.detector_shape[0], geometry.detector_shape[1]), dtype=np.float32)
 
     for v in range(0, geometry.detector_shape[0]):
         dv = (v * geometry.detector_spacing[0] + cv) ** 2
