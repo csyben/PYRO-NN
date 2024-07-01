@@ -1,2 +1,0 @@
-numpy
-pyronn_layers >= 0.1.0
