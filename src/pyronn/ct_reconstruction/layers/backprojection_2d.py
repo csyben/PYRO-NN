@@ -4,6 +4,18 @@ import numpy as np
 
 class ParallelBackProjectionFor2D:
     def forward(self, input, geometry, for_train=False):
+        '''
+        Reconstruction for the 2D parallel beam CT.
+
+        args:
+            input: (1, number_of_projections, detection_size) numpy array or torch.Tensor.
+            geometry: The projection geometry used for projection.
+            for_train: Set the return value data type if the backend is torch. You can get a numpy.array by setting this
+            value False, otherwise you will get a torch.Tensor.
+
+        return:
+            The reconstruction result of 2D parallel beam CT.
+        '''
         try:
             import torch
             from pyronn.ct_reconstruction.layers.torch.backprojection_2d import ParallelBackProjection2D
@@ -44,15 +56,27 @@ class ParallelBackProjectionFor2D:
 
 class FanBackProjectionFor2D:
     def forward(self, input, geometry, for_train=False):
+        '''
+        Reconstruction for the 2D fan beam CT.
+
+        args:
+            input: (1, number_of_projections, detection_size) numpy array or torch.Tensor.
+            geometry: The projection geometry used for projection.
+            for_train: Set the return value data type if the backend is torch. You can get a numpy.array by setting this
+            value False, otherwise you will get a torch.Tensor.
+
+        return:
+            The reconstruction result of 2D fan beam CT.
+        '''
         try:
             import torch
             from pyronn.ct_reconstruction.layers.torch.backprojection_2d import FanBackProjection2D
             print('work on torch')
 
             if not isinstance(input, torch.Tensor):
-                sinogram = torch.tensor(input.copy(), dtype=torch.float32)
+                sinogram = torch.tensor(input.copy(), dtype=torch.float32).cuda()
             else:
-                sinogram = torch.clone(input)
+                sinogram = torch.clone(input).cuda()
 
             tensor_geometry = {}
             geo_dict = vars(geometry)
@@ -64,7 +88,6 @@ class FanBackProjectionFor2D:
                     else:
                         tmp_tensor = torch.Tensor([param])
 
-                    sinogram = sinogram.cuda()
                     tensor_geometry[k] = tmp_tensor.cuda()
                 except:
                     print('Attribute <' + k + '> could not be transformed to torch.Tensor')

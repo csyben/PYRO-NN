@@ -2,8 +2,8 @@ import numpy as np
 import pyronn
 pyronn.set_background('torch')
 
-from pyronn.ct_reconstruction.geometry.geometry_fan_2d import GeometryFan2D
-from pyronn.ct_reconstruction.layers.torch.reconstruction import FanBeamReconstruction
+from pyronn.ct_reconstruction.geometry.geometry_base import GeometryFan2D
+from pyronn.ct_reconstruction.layers.backprojection_2d import FanBackProjectionFor2D
 from pyronn.ct_reconstruction.layers.projection_2d import FanProjectionFor2D
 from pyronn.ct_reconstruction.helpers.filters.filters import shepp_logan_2D
 from pyronn.ct_reconstruction.helpers.phantoms.primitives_2d import circle,rect

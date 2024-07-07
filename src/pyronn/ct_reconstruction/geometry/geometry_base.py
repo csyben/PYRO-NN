@@ -74,6 +74,12 @@ class GeometryBase:
         self.trajectory = np.array(trajectory, self.np_dtype)
 
     def update(self, dict):
+        '''
+            Change the geometry.
+
+        args:
+            dict: new geometry values. Choose your target properties by setting them as the keys.
+        '''
         changed = []
         for key in dict:
             if key in dir(self):
@@ -88,6 +94,9 @@ class GeometryBase:
                 print(f'Please confirm whether you need to modify the trajectory.')
 
     def get_dict(self):
+        '''
+            Get the geometry as a dict.
+        '''
         info = {}
         for i in dir(self):
             if i[:2] != '__': info[i] = getattr(self, i)

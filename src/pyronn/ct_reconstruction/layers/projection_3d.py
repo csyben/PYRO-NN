@@ -11,12 +11,27 @@ class Projection3D:
 
 class ConeProjectionFor3D(Projection3D):
     def forward(self, input, geometry, for_train=False):
+        '''
+        Projection for the 3D cone beam CT.
+
+        args:
+            input: (1, number_of_projections, detection_size) numpy array or torch.Tensor.
+            geometry: The projection geometry used for projection.
+            for_train: Set the return value data type if the backend is torch. You can get a numpy.array by setting this
+            value False, otherwise you will get a torch.Tensor.
+
+        return:
+            The reconstruction result of 3D cone beam CT.
+        '''
         try:
             import torch
             from pyronn.ct_reconstruction.layers.torch.projection_3d import ConeProjection3D
             print('work on torch')
 
-            phantom = torch.tensor(input.copy(), dtype=torch.float32)
+            if not isinstance(input, torch.Tensor):
+                phantom = torch.tensor(input.copy(), dtype=torch.float32).cuda()
+            else:
+                phantom = torch.clone(input).cuda()
 
             tensor_geometry = {}
             geo_dict = vars(geometry)
@@ -28,7 +43,7 @@ class ConeProjectionFor3D(Projection3D):
                     else:
                         tmp_tensor = torch.Tensor([param])
 
-                    phantom = torch.tensor(input.copy(), dtype=torch.float32).cuda()
+
                     tensor_geometry[k] = tmp_tensor.cuda()
                 except:
                     print('Attribute <' + k + '> could not be transformed to torch.Tensor')
