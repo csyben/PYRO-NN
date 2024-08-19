@@ -14,19 +14,15 @@ def fibonacci_sphere(n):
     return np.vstack([x,y,z]).T
 
 def rotation_matrix_from_points(p1, p2):
-    # 计算单位向量
     p1 = np.array(p1) / np.linalg.norm(p1)
     p2 = np.array(p2) / np.linalg.norm(p2)
 
-    # 计算旋转轴（叉积）
     axis = np.cross(p1, p2)
     axis_length = np.linalg.norm(axis)
     if axis_length < 1e-5:
         if np.dot(p1, p2) > 0:
-            # p1 和 p2 同向，无需旋转
             return np.eye(3)
         else:
-            # p1 和 p2 反向，需要旋转180度，找一个垂直于p1的向量作为旋转轴
             axis = np.array([p1[1], -p1[0], 0])
             if np.linalg.norm(axis) == 0:
                 axis = np.array([p1[2], 0, -p1[0]])
@@ -35,11 +31,9 @@ def rotation_matrix_from_points(p1, p2):
     else:
         axis = axis / axis_length
 
-    # 计算旋转角度（点积）
     cos_theta = np.dot(p1, p2)
     sin_theta = np.sqrt(1 - cos_theta ** 2)
 
-    # 使用罗德里格斯公式（Rodrigues' rotation formula）来计算旋转矩阵
     K = np.array([[0, -axis[2], axis[1]],
                   [axis[2], 0, -axis[0]],
                   [-axis[1], axis[0], 0]])

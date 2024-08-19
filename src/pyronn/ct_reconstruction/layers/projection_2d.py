@@ -2,7 +2,7 @@ import pyronn
 import numpy as np
 
 class ParallelProjectionFor2D:
-    def forward(self, input, geometry, for_train=False):
+    def forward(self, input, geometry, for_train=False, debug=False):
         '''
         Projection for the 2D parallel beam CT.
 
@@ -29,11 +29,18 @@ class ParallelProjectionFor2D:
             geo_dict = vars(geometry)
             for k in geo_dict:
                 param = geo_dict[k]
-                if hasattr(param, '__len__'):
-                    tmp_tensor = torch.Tensor(param)
+                try:
+                    if hasattr(param, '__len__'):
+                        tmp_tensor = torch.Tensor(param)
+                    else:
+                        tmp_tensor = torch.Tensor([param])
 
-                    phantom = torch.tensor(input.copy(), dtype=torch.float32).cuda()
                     tensor_geometry[k] = tmp_tensor.cuda()
+                except Exception as e:
+                    if isinstance(e, TypeError):
+                        if debug: print('Attribute <' + k + '> could not be transformed to torch.Tensor')
+                    else:
+                        raise e
             sinogram =  ParallelProjection2D().forward(phantom, **tensor_geometry)
             if for_train:
                 return sinogram
@@ -51,7 +58,7 @@ class ParallelProjectionFor2D:
 
 
 class FanProjectionFor2D:
-    def forward(self, input, geometry, for_train=False):
+    def forward(self, input, geometry, for_train=False, debug=False):
         '''
         Projection for the 2D fan beam CT.
 
@@ -77,15 +84,18 @@ class FanProjectionFor2D:
             geo_dict = vars(geometry)
             for k in geo_dict:
                 param = geo_dict[k]
-                try :
+                try:
                     if hasattr(param, '__len__'):
                         tmp_tensor = torch.Tensor(param)
                     else:
                         tmp_tensor = torch.Tensor([param])
 
                     tensor_geometry[k] = tmp_tensor.cuda()
-                except:
-                    print('Attribute <' + k + '> could not be transformed to torch.Tensor')
+                except Exception as e:
+                    if isinstance(e, TypeError):
+                        if debug: print('Attribute <' + k + '> could not be transformed to torch.Tensor')
+                    else:
+                        raise e
 
             sinogram = FanProjection2D().forward(phantom, **tensor_geometry)
             if for_train:

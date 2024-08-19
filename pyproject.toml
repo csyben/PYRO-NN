@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyronn"
-version = '1.0.0'
+version = '1.1.0'
 authors = [{name = "Christopher Syben", email = "christopher.syben@fau.de"}]
 description = "PYRO-NN is the high level Python API to the PYRO-NN-Layers known operators."
 readme = "README.rst"

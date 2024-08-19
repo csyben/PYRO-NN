@@ -17,8 +17,8 @@ import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
 
-from pyronn.ct_reconstruction.layers.torch.projection_3d import ConeProjection3D
-from pyronn.ct_reconstruction.layers.torch.backprojection_3d import ConeBackProjection3D
+from pyronn.ct_reconstruction.layers.projection_3d import ConeProjection3D
+from pyronn.ct_reconstruction.layers.backprojection_3d import ConeBackProjection3D
 from pyronn.ct_reconstruction.geometry.geometry import Geometry
 from pyronn.ct_reconstruction.helpers.phantoms import shepp_logan
 from pyronn.ct_reconstruction.helpers.filters.filters import ram_lak_3D

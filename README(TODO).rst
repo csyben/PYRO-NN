@@ -5,7 +5,8 @@ FRAMEWORK
    :target: https://badge.fury.io/py/pyronn
    :alt: PyPI version
 
-
+.. image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
+   :target: code_of_conduct.md
 
 The python framework for the PYRO-NN layers implemented in (https://github.com/csyben/PYRO-NN-Layers)
 
@@ -174,3 +175,4 @@ In the case of large data or deeper networks it could be favorable to switch to 
 can directly be used in the kernel without any duplication of the data. The downside is that the interpolation takes nearly 10 times longer.
 
 Note that the hardware interpolation is the default setup for all operators.
+

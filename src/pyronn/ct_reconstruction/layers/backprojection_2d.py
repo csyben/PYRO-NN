@@ -3,7 +3,7 @@ import numpy as np
 
 
 class ParallelBackProjectionFor2D:
-    def forward(self, input, geometry, for_train=False):
+    def forward(self, input, geometry, for_train=False, debug=False):
         '''
         Reconstruction for the 2D parallel beam CT.
 
@@ -19,7 +19,6 @@ class ParallelBackProjectionFor2D:
         try:
             import torch
             from pyronn.ct_reconstruction.layers.torch.backprojection_2d import ParallelBackProjection2D
-            print('work on torch')
 
             if not isinstance(input, torch.Tensor):
                 sinogram = torch.tensor(input.copy(), dtype=torch.float32)
@@ -36,8 +35,11 @@ class ParallelBackProjectionFor2D:
 
                         sinogram = sinogram.cuda()
                         tensor_geometry[k] = tmp_tensor.cuda()
-                except:
-                    print('Attribute <' + k + '> could not be transformed to torch.Tensor')
+                except Exception as e:
+                    if isinstance(e, TypeError):
+                        if debug: print('Attribute <' + k + '> could not be transformed to torch.Tensor')
+                    else:
+                        raise e
 
             reco = ParallelBackProjection2D().forward(sinogram.contiguous(), **tensor_geometry)
             if for_train:
@@ -55,7 +57,7 @@ class ParallelBackProjectionFor2D:
                 raise e
 
 class FanBackProjectionFor2D:
-    def forward(self, input, geometry, for_train=False):
+    def forward(self, input, geometry, for_train=False, debug=False):
         '''
         Reconstruction for the 2D fan beam CT.
 
@@ -89,8 +91,11 @@ class FanBackProjectionFor2D:
                         tmp_tensor = torch.Tensor([param])
 
                     tensor_geometry[k] = tmp_tensor.cuda()
-                except:
-                    print('Attribute <' + k + '> could not be transformed to torch.Tensor')
+                except Exception as e:
+                    if isinstance(e, TypeError):
+                        if debug: print('Attribute <' + k + '> could not be transformed to torch.Tensor')
+                    else:
+                        raise e
             reco = FanBackProjection2D().forward(sinogram.contiguous(), **tensor_geometry)
             if for_train:
                 return reco

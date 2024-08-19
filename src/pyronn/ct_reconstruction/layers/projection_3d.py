@@ -10,7 +10,7 @@ class Projection3D:
         pass
 
 class ConeProjectionFor3D(Projection3D):
-    def forward(self, input, geometry, for_train=False):
+    def forward(self, input, geometry, for_train=False, debug=False):
         '''
         Projection for the 3D cone beam CT.
 
@@ -26,7 +26,6 @@ class ConeProjectionFor3D(Projection3D):
         try:
             import torch
             from pyronn.ct_reconstruction.layers.torch.projection_3d import ConeProjection3D
-            print('work on torch')
 
             if not isinstance(input, torch.Tensor):
                 phantom = torch.tensor(input.copy(), dtype=torch.float32).cuda()
@@ -45,8 +44,11 @@ class ConeProjectionFor3D(Projection3D):
 
 
                     tensor_geometry[k] = tmp_tensor.cuda()
-                except:
-                    print('Attribute <' + k + '> could not be transformed to torch.Tensor')
+                except Exception as e:
+                    if isinstance(e, TypeError):
+                        if debug: print('Attribute <' + k + '> could not be transformed to torch.Tensor')
+                    else:
+                        raise e
 
             sinogram = ConeProjection3D().forward(phantom, **tensor_geometry)
             if for_train:
