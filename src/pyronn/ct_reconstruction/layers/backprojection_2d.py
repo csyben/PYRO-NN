@@ -73,7 +73,6 @@ class FanBackProjectionFor2D:
         try:
             import torch
             from pyronn.ct_reconstruction.layers.torch.backprojection_2d import FanBackProjection2D
-            print('work on torch')
 
             if not isinstance(input, torch.Tensor):
                 sinogram = torch.tensor(input.copy(), dtype=torch.float32).cuda()

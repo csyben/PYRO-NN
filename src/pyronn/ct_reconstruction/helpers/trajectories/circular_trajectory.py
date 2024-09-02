@@ -194,7 +194,7 @@ def multi_circular_trajectory_3d(number_of_projections, longtitude, angular_rang
         translation[0:4, 3] = np.array([0, 0, -source_isocenter_distance, 1])
 
         # combine the above into 4x4 extrinsic params matrix
-        extrinsic_params_mat = np.dot(np.dot(np.dot(np.dot(axis_align_R, translation), R_x_axis), R_z_axis), R_to_plane)
+        extrinsic_params_mat = np.dot(np.dot(np.dot(np.dot(axis_align_R, translation), R_x_axis), R_z_axis), R_to_plane.T)
         extrinsic_params_mat = extrinsic_params_mat / extrinsic_params_mat[3, 3]
 
         # calculate projection matrix
