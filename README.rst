@@ -68,14 +68,14 @@ or you can download this repository (https://github.com/csyben/PYRO-NN) and buil
     5. The wheel file will be in the dist directory.
 
 If necessary, you can change `pyproject.toml` for specific torch versions here:
-.. code-block:: bash
 
-         requires = ["setuptools==69.5.1",
-              "ninja",
-      #        "tensorflow[and-cuda]==2.11.1",
-              "--extra-index-url https://download.pytorch.org/whl/cu118",
-              "torch==2.3.0+cu118",
-      ]
+   requires = ["setuptools==69.5.1",
+           "ninja",
+           "tensorflow[and-cuda]==2.11.1",
+           "--extra-index-url https://download.pytorch.org/whl/cu118",
+           "torch==2.3.0+cu118",
+   ]
+
 
 If you encounter a problem during installation, have a look at our wiki: [https://github.com/csyben/PYRO-NN/wiki](https://github.com/csyben/PYRO-NN/wiki)
 
