@@ -50,7 +50,7 @@ Installation
 Install via pip :
 
 NOT supported remotely yet. Contact maintainers to get the wheel file.  
-.. code-block:: bash
+.. code-block:: 
 
    pip install pyronn-0.1.2-*.whl (Not Supported yet)
 
@@ -68,6 +68,8 @@ or you can download this repository (https://github.com/csyben/PYRO-NN) and buil
     5. The wheel file will be in the dist directory.
 
 If necessary, you can change `pyproject.toml` for specific torch versions here:
+
+.. code-block:: python
 
    requires = ["setuptools==69.5.1",
            "ninja",
