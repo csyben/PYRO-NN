@@ -15,10 +15,10 @@ PYRO-NN
 
 PYRO-NN brings state-of-the-art reconstruction algorithm to neural networks integrated into TensorFlow and PyTorch.  
 Open access paper available under:  
-[https://aapm.onlinelibrary.wiley.com/doi/full/10.1002/mp.13753](https://aapm.onlinelibrary.wiley.com/doi/full/10.1002/mp.13753)
+https://aapm.onlinelibrary.wiley.com/doi/full/10.1002/mp.13753
 
 pyronn depends on the pyronn_layers, which are now installed via pip. The source code of the pyronn_layers can be found under:  
-[https://github.com/csyben/PYRO-NN-Layers](https://github.com/csyben/PYRO-NN-Layers)
+https://github.com/csyben/PYRO-NN-Layers
 
 If you find this helpful, we kindly ask you to reference our article published in Medical Physics:
 
@@ -34,7 +34,7 @@ If you find this helpful, we kindly ask you to reference our article published i
 Documentation
 ===============
 For comprehensive documentation, please visit our website:  
-[https://pyronn-doc.github.io/](https://pyronn-doc.github.io/)
+[PyroNN v-1.1.0] (https://pyronn-doc.github.io/)
 
 Update
 =========
