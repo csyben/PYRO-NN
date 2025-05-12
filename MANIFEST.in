@@ -1,0 +1,5 @@
+global-include *.h
+global-include **.cu
+global-include **.cc
+include Makefile
+include src/pyronn_layers/pyronn_layers_tensorflow.so
