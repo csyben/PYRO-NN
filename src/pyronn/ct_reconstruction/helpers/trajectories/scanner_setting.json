@@ -1,0 +1,15 @@
+{
+  "number_vertical_pixels": 0,
+  "number_horizontal_pixels": 0,
+  "arv_source_position": 0,
+  "focus_object_distance_in_mm": 0,
+  "focus_detector_distance_in_mm": 0,
+  "scan_range_in_rad": 0,
+  "agv_detector_line_direction": 0,
+  "current_angle": 0,
+  "init_source_position": 0,
+  "init_detector_position": 0,
+  "init_detector_line_direction": 0,
+  "init_detector_column_direction": 0,
+  "angular_increment": 0
+}

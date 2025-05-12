@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools==69.5.1",
+        "ninja",
+#        "tensorflow[and-cuda]==2.11.1",
+        "--extra-index-url https://download.pytorch.org/whl/cu118",
+        "torch==2.3.0+cu118",
+] # zipfile.BadZipFile: Bad CRC-32 for file 'torch/lib/cudnn_cnn_infer64_8.dll' error happens if cache was used, can be solved by modify pip configuration file.
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyronn"
+version = '1.1.0'
+authors = [{name = "Christopher Syben", email = "christopher.syben@fau.de"}]
+description = "PYRO-NN is the high level Python API to the PYRO-NN-Layers known operators."
+readme = "README.rst"
+requires-python = ">=3.9"
+classifiers = [
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: Apache Software License",
+        "Operating System :: OS Independent",
+]
+
+dependencies = [
+        "numpy",
+]
+
+[project.urls]
+homepage = "https://github.com/csyben/PYRO-NN"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ['pyronn*']
+
+[tool.setuptools.package-data]
+pyronn_layers = ["*.so"]
+
+[project.optional-dependencies]
+tools = [
+        "matplotlib",
+        "PythonTools",
+]
+
+

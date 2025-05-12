@@ -5,21 +5,22 @@ FRAMEWORK
    :target: https://badge.fury.io/py/pyronn
    :alt: PyPI version
 
+.. image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
+   :target: code_of_conduct.md
 
-
-The python framework for the PYRO-NN layers implemented in (https://github.com/csyben/PYRO-NN-Layers)
+The Python framework for the PYRO-NN layers implemented in (https://github.com/csyben/PYRO-NN-Layers)
 
 PYRO-NN
 =========
 
-PYRO-NN brings state-of-the-art reconstruction algorithm to neural networks integrated into Tensorflow.
-Open access paper available under:
+PYRO-NN brings state-of-the-art reconstruction algorithm to neural networks integrated into TensorFlow and PyTorch.  
+Open access paper available under:  
 https://aapm.onlinelibrary.wiley.com/doi/full/10.1002/mp.13753
 
-pyronn depends on the pyronn_layers. They are now installed via pip. The source code of the pyronn_layers can be found under:
+pyronn depends on the pyronn_layers, which are now installed via pip. The source code of the pyronn_layers can be found under:  
 https://github.com/csyben/PYRO-NN-Layers
 
-If you find this helpful, we would kindly ask you to reference our article published in medical physics:
+If you find this helpful, we kindly ask you to reference our article published in Medical Physics:
 
 .. code-block:: 
 
@@ -30,127 +31,73 @@ If you find this helpful, we would kindly ask you to reference our article publi
    journal = {Medical Physics},
    }
 
+Documentation
+===============
+For comprehensive documentation, please visit our website:  
+[PyroNN v-1.1.0] (https://pyronn-doc.github.io/)
+
 Update
 =========
-With the new pyronn 0.1.0 Tensorflow 2.x will be supported. The default mode for pyronn is eager execution like Tensorflow itself.
-Major features in the update are:
 
-- Tensorflow 2.x support
-    - Eager execution for all pyronn_layers
-    - Keras support
-- Batch size support for all pyronn_layers
-- The pyronn_layers wheel is now a dependency and will be installed from pip repositories
-
-Planned
+Q&A
 =========
-
+    - DLL load failed while importing pyronn_layers: Das angegebene Modul wurde nicht gefunden. (import pyronn first)
+    - DLL load failed while importing pyronn_layers: Die angegebene Prozedur wurde nicht gefunden. (torch version problem)
 
 Installation
 ============
 
 Install via pip :
 
-.. code-block:: bash
+NOT supported remotely yet. Contact maintainers to get the wheel file.  
+.. code-block:: 
 
-   pip install pyronn
+   pip install pyronn-0.1.2-*.whl (Not Supported yet)
 
-or if you downloaded this repository (https://github.com/csyben/PYRO-NN) using:
+or you can download this repository (https://github.com/csyben/PYRO-NN) and build a wheel by yourself:
 
-.. code-block:: bash
+    - Microsoft Visual C++ 14.0 or greater is required
+    - For Windows system, WSL2 is required
+    - Build package is required
+    - CUDA is required (more than 10.2)
+    
+    1. Clone the repository
+    2. Change into torch+tf branch
+    3. Modify TOML file if needed; please make sure the torch version in TOML file is the same as your environment, or DLL errors will occur.
+    4. Run "python -m build ."
+    5. The wheel file will be in the dist directory.
 
-   pip install -e .
-
-If you encounter a problem during the installation have a look at our wiki: https://github.com/csyben/PYRO-NN/wiki
-
-
-Changelog
-=========
-
-Can be found `CHANGELOG.md <https://github.com/csyben/PYRO-NN/blob/master/CHANGELOG.md>`_.
-
-Usage
-======
-PYRO-NN comes with all relevant helper classes to easily run the projection and back-projection operators within the Tensorflow context.
-
-To use the Layers a geometry object is needed:
+If necessary, you can change `pyproject.toml` for specific torch versions here:
 
 .. code-block:: python
 
-    from pyronn.ct_reconstruction.geometry.geometry_parallel_2d import GeometryParallel2D
+   requires = ["setuptools==69.5.1",
+           "ninja",
+           "tensorflow[and-cuda]==2.11.1",
+           "--extra-index-url https://download.pytorch.org/whl/cu118",
+           "torch==2.3.0+cu118",
+   ]
 
 
-    volume_size = 256
-    volume_shape = [volume_size, volume_size]
-    volume_spacing = [1, 1]
+If you encounter a problem during installation, have a look at our wiki: [https://github.com/csyben/PYRO-NN/wiki](https://github.com/csyben/PYRO-NN/wiki)
 
-    # Detector Parameters:
-    detector_shape = 512
-    detector_spacing = 1
+Related Repositories
+====================
 
-    # Trajectory Parameters:
-    number_of_par_projections = 360
-    angular_range = 2 * np.pi
-
-    # create Geometry class
-    par_geometry = GeometryParallel(volume_shape, volume_spacing, detector_shape, detector_spacing, number_of_fan_projections, angular_range)
-
-After defining the basic geometry parameters, a trajectory need to be set. The circular_trajectory class computes an idealiyed
-circular trajectory for a given geometry. For 2D parallel- and fan-beam geometry a trajectory is described using the central ray vectors.
-For 3D cone-beam geometry the trajectory is described with projection matrices.
-
-The trajectory can be calculated and set as follows:
-
-.. code-block:: python
-
-    from pyronn.ct_reconstruction.helpers.trajectories import circular_trajectory
-
-    par_geometry.set_trajectory(circular_trajectory.circular_trajectory_2d(par_geometry))
-
-At this point the geometry is fully setup and can be used to create projections and reconstructions.
-The Layers just takes the respective input tensor and the geometry object to conduct the projection, reconstruction respectively.
-PYRO-NN also provides convinient general way to create sinograms and reconstructions. The generate methods are generalized
-and take the input data, the layer to be used and the geometry. The only restriction is that the generation methods are within
-the Tensorflow session scope:
-
-.. code-block:: python
-
-    from pyronn.ct_reconstruction.layers.projection_2d import parallel_projection2d
-    from pyronn.ct_reconstruction.layers.backprojection_2d import parallel_backprojection2d
-    from pyronn.ct_reconstruction.helpers.misc import generate_sinogram as sino_helper
-    from pyronn.ct_reconstruction.helpers.misc import generate_reco as reco_helper
-    from pyronn.ct_reconstruction.helpers.phantoms import shepp_logan
-
-    phantom = shepp_logan.shepp_logan_enhanced(par_geometry.volume_shape)
-
-    sinogram = sino_helper.generate_sinogram(phantom, parallel_projection2d, par_geometry)
-    reconstruction = reco_helper.generate_reco(sinogram, parallel_backprojection2d, par_geometry)
-
-In the following the example using the Layers directly is shown (Note that the Layers are within the Tensorflow graph context
-and therefore need to be evaluated before the result can be accessed):
-
-.. code-block:: python
-
-    from pyronn.ct_reconstruction.layers.projection_2d import parallel_projection2d
-    from pyronn.ct_reconstruction.helpers.phantoms import shepp_logan
-
-    phantom = shepp_logan.shepp_logan_enhanced(par_geometry.volume_shape)
-
-    sinogram = parallel_projection2d(phantom, par_geometry)
-
-Using the PYRO-NN Layers directly registers the respective gradient, thus they can be used as normal Tensorflow Layers within the graph.
-For more details checkout the examples which are covering the different geometry and application cases.
+- [Trainable Bilateral Filter](https://github.com/sypsyp97/trainable_bilateral_filter_torch): A pure PyTorch implementation of trainable bilateral filter for image denoising.
+- [Geometry Gradients CT](https://github.com/mareikethies/geometry_gradients_CT): This repository contains the code for computed tomography (CT) reconstruction in fan-beam and cone-beam geometry, which is differentiable with respect to its acquisition geometry.
 
 Potential Challenges
 ====================
 
-Memory consumption on the graphics card can be a problem with CT datasets. For the reconstruction operators the input data is passed via a Tensorflow tensor,
-which is already allocated on the graphicscard by Tensorflow itself. In fact without any manual configuration Tensorflow will allocate most of
-the graphics card memory and handle the memory management internally. This leads to the problem that CUDA malloc calls in the operators itself will allocate
-memory outside of the Tensorflow context, which can easily lead to out of memory errors, although the memory is not full.
+Memory consumption on the graphics card can be a problem with CT datasets. For the reconstruction operators, the input data is passed via a TensorFlow tensor,
+which is already allocated on the graphics card by TensorFlow itself. In fact, without any manual configuration, TensorFlow will allocate most of
+the graphics card memory and handle the memory management internally. This leads to the problem that CUDA malloc calls in the operators will allocate
+memory outside of the TensorFlow context, which can easily lead to out-of-memory errors, although the memory is not full.
 
 There exist two ways of dealing with this problem:
 
-1. With the new pyronn version of 0.1.0 pyronn will automatically set memory growth for Tensorflow to true. The following code allows the memory growth:
+1. With the new pyronn version of 0.1.0, pyronn will automatically set memory growth for TensorFlow to true. The following code allows the memory growth:
 
 .. code-block:: python
 
@@ -159,13 +106,13 @@ There exist two ways of dealing with this problem:
             try:
                 for gpu in gpus:
                     tf.config.experimental.set_memory_growth(gpu, True)
-            except RunetimeError as e:
+            except RuntimeError as e:
                 print(e)
 
-2. The memory consuming operators like 3D cone-beam projection and back-projection have a so called hardware_interp flag. This means that the
-interpolation for both operators are either done by the CUDA texture or based on software interpolation. To use the CUDA texture,
-and thus have a fast hardware_interpolation, the input data need to be copied into a new CUDA array, thus consuming the double amount of memory.
-In the case of large data or deeper networks it could be favorable to switch to the software interpolation mode. In this case the actual Tensorflow pointer
+2. The memory-consuming operators like 3D cone-beam projection and back-projection have a so-called `hardware_interp` flag. This means that the
+interpolation for both operators is either done by the CUDA texture or based on software interpolation. To use the CUDA texture,
+and thus have a fast hardware interpolation, the input data needs to be copied into a new CUDA array, thus consuming double the amount of memory.
+In the case of large data or deeper networks, it could be favorable to switch to the software interpolation mode. In this case, the actual TensorFlow pointer
 can directly be used in the kernel without any duplication of the data. The downside is that the interpolation takes nearly 10 times longer.
 
 Note that the hardware interpolation is the default setup for all operators.
